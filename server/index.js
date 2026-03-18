@@ -144,61 +144,86 @@ async function spotifySearch(title, artist) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// YOUTUBE
+// YOUTUBE — search link only (no API quota used)
+// Builds a direct YouTube search URL so users land on the right results
+// instantly with zero API calls. YouTube API used only if key + quota available.
 // ═════════════════════════════════════════════════════════════════════════════
+
+// In-memory cache: "title|||artist" -> result (lives for process lifetime)
+const ytCache = new Map();
+
 async function youtubeSearch(title, artist) {
   try {
-    const key = process.env.YOUTUBE_API_KEY;
-    if (!key) return null;
+    const cacheKey = `${title.toLowerCase()}|||${artist.toLowerCase()}`;
 
-    const queries = [
-      `${title} ${artist} official audio`,
-      `${title} ${artist} official video`,
-      `${title} ${artist}`
-    ];
-
-    let bestResult = null;
-    let bestScore  = 0;
-
-    for (const q of queries) {
-      const res = await safeFetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q)}&type=video&maxResults=5&key=${key}`
-      );
-      if (!res) continue;
-
-      let d;
-      try { d = await res.json(); } catch (e) { continue; }
-
-      if (d?.error) {
-        console.warn('[YouTube] API error:', d.error.message);
-        // Don't crash — just skip YouTube and return null
-        return null;
-      }
-
-      const items = d?.items || [];
-      for (const item of items) {
-        const vtitle   = item.snippet?.title || '';
-        const vchannel = item.snippet?.channelTitle || '';
-        const ts = matchScore(vtitle, title);
-        const as = Math.max(matchScore(vtitle, artist), matchScore(vchannel, artist));
-        const score = (ts * 0.6) + (as * 0.4);
-        if (score > bestScore) { bestScore = score; bestResult = item; }
-      }
-      if (bestScore >= 0.75) break;
+    // Return cached result if available
+    if (ytCache.has(cacheKey)) {
+      console.log(`  [YouTube] cache hit: "${title}"`);
+      return ytCache.get(cacheKey);
     }
 
-    if (!bestResult || bestScore < 0.4) return null;
+    const key = process.env.YOUTUBE_API_KEY;
 
-    return {
-      url:        `https://www.youtube.com/watch?v=${bestResult.id.videoId}`,
-      videoId:    bestResult.id.videoId,
-      thumbnail:  bestResult.snippet?.thumbnails?.medium?.url || null,
-      matchScore: bestScore,
-      verified:   bestScore >= 0.75
+    // If API key available — try API first, fall back to search link on any error
+    if (key) {
+      const q   = encodeURIComponent(`${title} ${artist} official audio`);
+      const res = await safeFetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&maxResults=3&key=${key}`
+      );
+
+      if (res) {
+        let d;
+        try { d = await res.json(); } catch (e) { d = null; }
+
+        if (d && !d.error && d.items?.length) {
+          const item  = d.items[0];
+          const score = (matchScore(item.snippet?.title || '', title) * 0.6) +
+                        (matchScore(item.snippet?.channelTitle || '', artist) * 0.4);
+
+          if (score >= 0.4) {
+            const result = {
+              url:       `https://www.youtube.com/watch?v=${item.id.videoId}`,
+              videoId:   item.id.videoId,
+              thumbnail: item.snippet?.thumbnails?.medium?.url || null,
+              matchScore: score,
+              verified:  score >= 0.75,
+              viaApi:    true
+            };
+            ytCache.set(cacheKey, result);
+            return result;
+          }
+        }
+
+        if (d?.error) {
+          console.warn(`[YouTube] API error: ${d.error.message} — falling back to search link`);
+        }
+      }
+    }
+
+    // Fallback: direct YouTube search URL — always works, zero quota
+    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} ${artist}`)}`;
+    const result = {
+      url:       searchUrl,
+      videoId:   null,
+      thumbnail: null,
+      matchScore: 0.6,
+      verified:  false,
+      viaApi:    false
     };
+    ytCache.set(cacheKey, result);
+    return result;
+
   } catch (e) {
-    console.warn('[YouTube] search crashed:', e.message);
-    return null;
+    console.warn('[YouTube] crashed:', e.message);
+    // Still return a search link — never return null for YouTube
+    return {
+      url:      `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} ${artist}`)}`,
+      videoId:  null,
+      thumbnail: null,
+      matchScore: 0.5,
+      verified: false,
+      viaApi:   false
+    };
   }
 }
 
