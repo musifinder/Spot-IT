@@ -158,7 +158,8 @@ async function youtubeSearch(title, artist) {
   for (const q of queries) {
     try {
       const res = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q)}&type=video&maxResults=5&key=${key}`
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q)}&type=video&maxResults=5&key=${key}`,
+        { headers: { 'Referer': 'https://localhost', 'X-Referer': 'https://localhost' } }
       );
       const d     = await res.json();
 
