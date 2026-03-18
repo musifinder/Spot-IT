@@ -240,12 +240,14 @@ async function crossCheck(rec) {
     const spotifyOk    = !!spotify?.verified;
     const youtubeOk    = !!youtube?.verified;
     const spotifyFound = !!spotify;
-    const youtubeFound = !!youtube;
+    // YouTube viaApi:false means search link fallback — still counts as found
+    const youtubeFound = !!youtube?.url;
 
     let confidence;
-    if      (spotifyOk && youtubeOk)           confidence = 'high';
-    else if (spotifyOk || youtubeOk)           confidence = 'medium';
-    else if (spotifyFound || youtubeFound)     confidence = 'low';
+    if      (spotifyOk && youtubeOk)       confidence = 'high';
+    else if (spotifyOk)                    confidence = 'high';   // Spotify exact = trust it
+    else if (youtubeOk)                    confidence = 'medium';
+    else if (spotifyFound || youtubeFound) confidence = 'low';
     else { console.log(`  [cross-check] DROPPED: "${rec.title}" — not found`); return null; }
 
     console.log(`  [cross-check] "${rec.title}" → ${confidence}`);
