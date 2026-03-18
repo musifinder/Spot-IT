@@ -1,41 +1,53 @@
 require('dotenv').config();
-const express    = require('express');
-const cors       = require('cors');
-const helmet     = require('helmet');
-const rateLimit  = require('express-rate-limit');
-const path       = require('path');
+const express   = require('express');
+const cors      = require('cors');
+const rateLimit = require('express-rate-limit');
+const path      = require('path');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// ── Security ──────────────────────────────────────────────────────────────────
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc:  ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
-      styleSrc:   ["'self'", "'unsafe-inline'", "fonts.googleapis.com", "fonts.gstatic.com"],
-      fontSrc:    ["'self'", "fonts.gstatic.com"],
-      connectSrc: ["'self'"],
-      imgSrc:     ["'self'", "data:"],
-    }
-  }
-}));
+app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json({ limit: '10kb' }));
 
-// ── Rate limiting: 20 searches per IP per 10 minutes ─────────────────────────
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000,
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
+  max: 30,
+  keyGenerator: (req) => req.ip,
   message: { error: 'Too many searches — wait a few minutes and try again.' }
 });
-app.use('/api/', limiter);
+app.use('/api/discover', limiter);
 
-// ── Static frontend ───────────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, '../public')));
+
+// ── Extract JSON robustly from messy AI output ────────────────────────────────
+function extractJSON(raw) {
+  // Strip markdown fences
+  let text = raw.replace(/```json|```/g, '').trim();
+
+  // Try parsing directly first
+  try { return JSON.parse(text); } catch (_) {}
+
+  // Find the outermost { ... } block
+  const start = text.indexOf('{');
+  const end   = text.lastIndexOf('}');
+  if (start === -1 || end === -1) throw new Error('No JSON object found in response');
+
+  text = text.slice(start, end + 1);
+  try { return JSON.parse(text); } catch (_) {}
+
+  // Last resort: strip control characters and try again
+  text = text.replace(/[\x00-\x1F\x7F]/g, ' ');
+  return JSON.parse(text);
+}
 
 // ── /api/discover ─────────────────────────────────────────────────────────────
 app.post('/api/discover', async (req, res) => {
@@ -44,7 +56,7 @@ app.post('/api/discover', async (req, res) => {
   if (!song || typeof song !== 'string' || song.trim().length < 2)
     return res.status(400).json({ error: 'Please provide a song name.' });
 
-  const ALLOWED = ['tempo','melody','rhythm','lyrics','vibe','production'];
+  const ALLOWED = ['tempo', 'melody', 'rhythm', 'lyrics', 'vibe', 'production'];
   const attrs   = (attributes || []).filter(a => ALLOWED.includes(a));
   if (!attrs.length)
     return res.status(400).json({ error: 'Select at least one attribute.' });
@@ -55,14 +67,14 @@ app.post('/api/discover', async (req, res) => {
 
   const attrList = attrs.join(', ');
 
-  const systemPrompt = `You are an expert music analyst and recommendation engine with encyclopedic knowledge of music theory, production techniques, lyrical styles, and artists from the most obscure underground to mainstream across every genre and era. Always respond with valid JSON only — no markdown, no backticks, no preamble.`;
+  const systemPrompt = `You are a music recommendation engine. You MUST respond with valid JSON only — absolutely no markdown, no code fences, no explanation, no text before or after the JSON object. Any text outside the JSON will break the application.`;
 
-  const userPrompt = `Analyze the song "${song.trim()}" and find 8 similar songs based on these attributes: ${attrList}.
+  const userPrompt = `Find 8 songs similar to "${song.trim()}" based on: ${attrList}.
 
-CRITICAL: At least 5 of the 8 must be lesser-known, underrated, or underground artists — hidden gems most people haven't heard. Include diverse eras and genres.
+Bias toward underrated/underground artists (at least 5 of 8 should be lesser-known).
 
-Return ONLY raw JSON, no fences, no extra text:
-{"song":{"title":"exact title","artist":"artist name","attributes":{"bpm":"BPM estimate","key":"musical key","energy":0.7,"danceability":0.6,"mood":"mood description","genre_tags":["tag1","tag2"]}},"recommendations":[{"title":"song title","artist":"artist name","year":"year","popularity":"underground|emerging|mainstream","match_attributes":["attr1","attr2"],"similarity_score":0.92,"why":"2 sentences on the specific musical elements that make this a match","genre_tags":["tag1","tag2"]}]}`;
+Respond with ONLY this JSON object, nothing else before or after it:
+{"song":{"title":"string","artist":"string","attributes":{"bpm":"string","key":"string","energy":0.7,"danceability":0.6,"mood":"string","genre_tags":["string"]}},"recommendations":[{"title":"string","artist":"string","year":"string","popularity":"underground","match_attributes":["string"],"similarity_score":0.9,"why":"string","genre_tags":["string"]}]}`;
 
   try {
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -73,8 +85,9 @@ Return ONLY raw JSON, no fences, no extra text:
       },
       body: JSON.stringify({
         model:       'llama-3.3-70b-versatile',
-        temperature: 0.7,
+        temperature: 0.5,
         max_tokens:  2000,
+        response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user',   content: userPrompt   }
@@ -90,17 +103,27 @@ Return ONLY raw JSON, no fences, no extra text:
       return res.status(502).json({ error: 'AI service error — please try again.' });
     }
 
-    const data   = await groqRes.json();
-    const raw    = data.choices?.[0]?.message?.content || '';
-    const clean  = raw.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
+    const data  = await groqRes.json();
+    const raw   = data.choices?.[0]?.message?.content || '';
+
+    let parsed;
+    try {
+      parsed = extractJSON(raw);
+    } catch (parseErr) {
+      console.error('JSON parse failed. Raw output:', raw.slice(0, 500));
+      return res.status(502).json({ error: 'AI returned malformed data — please try again.' });
+    }
+
+    // Validate minimum structure
+    if (!parsed.song || !Array.isArray(parsed.recommendations)) {
+      console.error('Unexpected structure:', JSON.stringify(parsed).slice(0, 300));
+      return res.status(502).json({ error: 'AI returned unexpected structure — please try again.' });
+    }
 
     return res.json(parsed);
 
   } catch (err) {
     console.error('Server error:', err.message);
-    if (err instanceof SyntaxError)
-      return res.status(502).json({ error: 'AI returned unexpected data — try again.' });
     return res.status(500).json({ error: 'Server error — please try again.' });
   }
 });
@@ -110,31 +133,22 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ── Catch-all → frontend ──────────────────────────────────────────────────────
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// ── Start ─────────────────────────────────────────────────────────────────────
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🎵  Music Discovery Engine running on port ${PORT}`);
   console.log(`    Groq key: ${process.env.GROQ_API_KEY ? 'YES ✓' : 'NO ✗'}\n`);
 
-  // Keep-alive ping every 14 minutes to prevent free-tier sleep
   const publicURL =
     process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` :
-    process.env.RENDER_EXTERNAL_URL   ? process.env.RENDER_EXTERNAL_URL :
-    null;
+    process.env.RENDER_EXTERNAL_URL   ? process.env.RENDER_EXTERNAL_URL : null;
 
   if (publicURL) {
-    console.log(`    Keep-alive → ${publicURL}/api/health`);
     setInterval(async () => {
-      try {
-        await fetch(`${publicURL}/api/health`);
-        console.log(`[keep-alive] ${new Date().toISOString()} ok`);
-      } catch (e) {
-        console.warn(`[keep-alive] failed: ${e.message}`);
-      }
+      try { await fetch(`${publicURL}/api/health`); }
+      catch (e) { console.warn(`[keep-alive] failed: ${e.message}`); }
     }, 14 * 60 * 1000);
   }
 });
