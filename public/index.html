@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AI-powered music discovery. Type any song, find hidden bangers with matching tempo, melody, rhythm, and vibe. Free, no account needed." />
+  <title>Music Discovery Engine — Find Your Hidden Bangers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0a0f;
+      --surface:   #111118;
+      --surface2:  #1a1a24;
+      --surface3:  #22222e;
+      --accent:    #c8f25a;
+      --accent2:   #7c6af5;
+      --danger:    #e44b4a;
+      --text:      #f0efe8;
+      --muted:     #7a7a88;
+      --border:    rgba(255,255,255,0.07);
+      --font-mono: 'Space Mono', monospace;
+      --font-sans: 'DM Sans', sans-serif;
+      --radius:    10px;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    #app { max-width: 780px; margin: 0 auto; padding: 3.5rem 1.25rem 6rem; }
+
+    /* ── Header ── */
+    .header { margin-bottom: 3rem; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .eyebrow::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:.4; transform:scale(.7); }
+    }
+    h1 {
+      font-size: clamp(2rem, 6vw, 3rem);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+    }
+    h1 em { font-style: normal; color: var(--accent2); }
+    .header-sub {
+      font-size: 15px;
+      color: var(--muted);
+      margin-top: 0.75rem;
+      max-width: 520px;
+      line-height: 1.65;
+    }
+
+    /* ── Search box ── */
+    .search-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1.25rem 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .search-row { display: flex; gap: 10px; }
+    .search-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.8rem 1rem;
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      min-width: 0;
+    }
+    .search-input::placeholder { color: var(--muted); font-style: italic; }
+    .search-input:focus {
+      border-color: rgba(124,106,245,.5);
+      box-shadow: 0 0 0 3px rgba(124,106,245,.08);
+    }
+    .search-btn {
+      background: var(--accent);
+      color: #0a0a0f;
+      border: none;
+      border-radius: var(--radius);
+      padding: .8rem 1.4rem;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity .15s, transform .1s;
+      flex-shrink: 0;
+    }
+    .search-btn:hover:not(:disabled) { opacity: .88; }
+    .search-btn:active:not(:disabled) { transform: scale(.97); }
+    .search-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+    .chips-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin: .9rem 0 .45rem;
+    }
+    .attr-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .15s;
+      user-select: none;
+    }
+    .chip:hover { border-color: rgba(124,106,245,.3); color: var(--text); }
+    .chip.active {
+      background: rgba(124,106,245,.12);
+      border-color: rgba(124,106,245,.5);
+      color: #b0a8ff;
+    }
+
+    /* ── Error ── */
+    .error-banner {
+      background: rgba(228,75,74,.08);
+      border: 1px solid rgba(228,75,74,.25);
+      border-radius: var(--radius);
+      padding: .75rem 1rem;
+      font-size: 13px;
+      color: #f09595;
+      margin-bottom: 1.25rem;
+      display: none;
+    }
+    .error-banner.visible { display: block; animation: fadeIn .2s ease; }
+
+    @keyframes fadeIn {
+      from { opacity:0; transform:translateY(6px); }
+      to   { opacity:1; transform:none; }
+    }
+
+    /* ── Song profile ── */
+    .song-profile {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    .song-profile.visible { display: block; animation: fadeIn .3s ease; }
+
+    .profile-top { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; }
+    .profile-art {
+      width: 54px; height: 54px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent2) 0%, var(--accent) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+    }
+    .profile-name   { font-size: 16px; font-weight: 600; line-height: 1.3; }
+    .profile-artist { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 9px; color: var(--muted);
+      letter-spacing: .12em; text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .attr-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    @media (max-width:480px) { .attr-grid { grid-template-columns: repeat(2,1fr); } }
+    .attr-card { background: var(--surface2); border-radius: 8px; padding: .6rem .8rem; }
+    .attr-key {
+      font-family: var(--font-mono); font-size: 9px; color: var(--muted);
+      letter-spacing: .1em; text-transform: uppercase; margin-bottom: 3px;
+    }
+    .attr-val  { font-size: 13px; font-weight: 500; }
+    .attr-bar  { height: 3px; background: var(--surface3); border-radius: 2px; margin-top: 5px; }
+    .attr-fill { height: 100%; border-radius: 2px; background: var(--accent2); transition: width .7s cubic-bezier(.4,0,.2,1); }
+
+    /* ── Loading ── */
+    .loading { text-align: center; padding: 4rem 1rem; display: none; }
+    .loading.visible { display: block; }
+    .loading-ring {
+      width: 36px; height: 36px;
+      border: 2px solid var(--surface3);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .9s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-label { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-bottom: 1rem; }
+    .loading-step  { font-size: 12px; color: var(--muted); opacity: 0; transition: opacity .4s; padding: 2px 0; }
+    .loading-step.show { opacity: .7; }
+
+    /* ── Empty ── */
+    .empty { text-align: center; padding: 4rem 1rem; color: var(--muted); }
+    .empty-glyph { font-size: 3rem; opacity: .2; margin-bottom: .75rem; display: block; }
+    .empty-text  { font-size: 14px; }
+
+    /* ── Results header ── */
+    .results-header {
+      font-family: var(--font-mono); font-size: 10px; color: var(--muted);
+      letter-spacing: .12em; text-transform: uppercase;
+      margin-bottom: .75rem;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .results-header::after { content:''; flex:1; height:1px; background: var(--border); }
+
+    /* ── Rec card ── */
+    .rec-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.15rem;
+      margin-bottom: 8px;
+      transition: border-color .2s, transform .15s;
+      animation: fadeIn .3s ease both;
+    }
+    .rec-card:hover { border-color: rgba(255,255,255,.13); transform: translateY(-1px); }
+
+    .rec-body    { display: flex; gap: 12px; align-items: flex-start; }
+    .rec-num     { font-family: var(--font-mono); font-size: 10px; color: var(--muted); min-width: 22px; padding-top: 3px; }
+    .rec-content { flex: 1; min-width: 0; }
+    .rec-title   { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rec-meta    { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+    .pop-badge   { font-size: 10px; font-family: var(--font-mono); padding: 1px 7px; border-radius: 4px; margin-left: 5px; }
+    .pop-underground { background: rgba(200,242,90,.1);  color: var(--accent); }
+    .pop-emerging    { background: rgba(124,106,245,.1); color: #b0a8ff; }
+    .pop-mainstream  { background: rgba(255,255,255,.05); color: var(--muted); }
+
+    .rec-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .tag {
+      font-size: 11px; padding: 2px 8px; border-radius: 4px;
+      background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
+    }
+    .tag.match { background: rgba(200,242,90,.07);  color: #a8d44a; border-color: rgba(200,242,90,.18); }
+    .tag.score { background: rgba(124,106,245,.07); color: #b0a8ff; border-color: rgba(124,106,245,.2); }
+
+    .rec-why {
+      font-size: 13px; color: var(--muted); margin-top: 10px; line-height: 1.55;
+      border-top: 1px solid var(--border); padding-top: 10px;
+    }
+
+    /* ── Ratings ── */
+    .rating-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+    .rating-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+    .rate-btn {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px 11px; font-size: 12px; color: var(--muted);
+      cursor: pointer; transition: all .15s;
+    }
+    .rate-btn:hover { color: var(--text); border-color: rgba(255,255,255,.15); }
+    .rate-btn.up.active   { background: rgba(200,242,90,.08); border-color: var(--accent); color: var(--accent); }
+    .rate-btn.down.active { background: rgba(228,75,74,.08);  border-color: var(--danger); color: var(--danger); }
+    .rate-resp { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-left: 2px; }
+
+    /* ── Bias panel ── */
+    .bias-panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1rem 1.15rem;
+      margin-top: 1rem; display: none;
+    }
+    .bias-panel.visible { display: block; }
+    .bias-title { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; }
+    .bias-row   { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 12px; }
+    .bias-lbl   { color: var(--muted); width: 85px; flex-shrink: 0; }
+    .bias-track { flex: 1; height: 4px; background: var(--surface3); border-radius: 2px; }
+    .bias-prog  { height: 100%; border-radius: 2px; transition: width .5s ease; }
+    .bias-num   { font-family: var(--font-mono); font-size: 10px; color: var(--muted); width: 30px; text-align: right; }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 3rem; text-align: center;
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--muted); opacity: .4; line-height: 1.9;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <header class="header">
+    <div class="eyebrow">music discovery engine</div>
+    <h1>Find your<br><em>hidden bangers</em></h1>
+    <p class="header-sub">Type any song and artist. AI analyzes its sonic DNA — tempo, melody, rhythm, lyrics & vibe — then surfaces tracks you've never heard but were made for you.</p>
+  </header>
+
+  <div class="search-box">
+    <div class="search-row">
+      <input id="songInput" class="search-input"
+             placeholder="e.g. Low Down Derrty Blues – Smino"
+             autocomplete="off" spellcheck="false" />
+      <button id="searchBtn" class="search-btn" onclick="findSimilar()">FIND IT</button>
+    </div>
+    <div class="chips-label">Match by</div>
+    <div class="attr-chips">
+      <span class="chip active" data-attr="tempo">Tempo / BPM</span>
+      <span class="chip active" data-attr="melody">Melody</span>
+      <span class="chip active" data-attr="rhythm">Rhythm / Flow</span>
+      <span class="chip active" data-attr="lyrics">Lyrical style</span>
+      <span class="chip active" data-attr="vibe">Overall vibe</span>
+      <span class="chip active" data-attr="production">Production</span>
+    </div>
+  </div>
+
+  <div class="error-banner" id="errBanner"></div>
+
+  <div class="song-profile" id="songProfile">
+    <div class="profile-top">
+      <div class="profile-art">♪</div>
+      <div>
+        <div class="profile-name"   id="profileName">—</div>
+        <div class="profile-artist" id="profileArtist">—</div>
+      </div>
+    </div>
+    <div class="section-label">sonic attributes</div>
+    <div class="attr-grid" id="attrGrid"></div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="loading-ring"></div>
+    <div class="loading-label">analyzing sonic DNA</div>
+    <div id="loadingSteps"></div>
+  </div>
+
+  <div id="results">
+    <div class="empty" id="emptyState">
+      <span class="empty-glyph">◈</span>
+      <div class="empty-text">Enter any song above to start discovering</div>
+    </div>
+    <div id="recList" style="display:none;"></div>
+  </div>
+
+  <div class="bias-panel" id="biasPanel">
+    <div class="bias-title">Your feedback breakdown</div>
+    <div id="biasBars"></div>
+  </div>
+
+  <footer class="footer">
+    powered by groq ai · free for everyone · no account needed · no tracking
+  </footer>
+</div>
+
+<script>
+  document.querySelectorAll('.chip').forEach(c =>
+    c.addEventListener('click', () => c.classList.toggle('active'))
+  );
+  document.getElementById('songInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') findSimilar();
+  });
+
+  const ratings = {};
+
+  function getActiveAttrs() {
+    return [...document.querySelectorAll('.chip.active')].map(c => c.dataset.attr);
+  }
+
+  function showError(msg) {
+    const b = document.getElementById('errBanner');
+    b.textContent = msg; b.classList.add('visible');
+    setTimeout(() => b.classList.remove('visible'), 7000);
+  }
+
+  function setLoading(on) {
+    document.getElementById('loading').classList.toggle('visible', on);
+    document.getElementById('searchBtn').disabled = on;
+  }
+
+  function animateSteps() {
+    const steps = [
+      '⟡ Identifying song signature...',
+      '⟡ Mapping sonic attributes...',
+      '⟡ Scanning 100M+ tracks...',
+      '⟡ Filtering for hidden gems...',
+      '⟡ Scoring similarity matches...'
+    ];
+    const el = document.getElementById('loadingSteps');
+    el.innerHTML = '';
+    steps.forEach((s, i) => {
+      const d = document.createElement('div');
+      d.className = 'loading-step'; d.textContent = s;
+      el.appendChild(d);
+      setTimeout(() => d.classList.add('show'), i * 650);
+    });
+  }
+
+  function esc(s) {
+    return String(s||'')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function pct(v) { return v != null ? Math.round(v*100)+'%' : '—'; }
+
+  // ── Search ─────────────────────────────────────────────────────────────────
+  async function findSimilar() {
+    const song = document.getElementById('songInput').value.trim();
+    if (!song) { showError('Please enter a song name and artist.'); return; }
+
+    const attributes = getActiveAttrs();
+    if (!attributes.length) { showError('Select at least one attribute to match.'); return; }
+
+    document.getElementById('songProfile').classList.remove('visible');
+    document.getElementById('recList').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('biasPanel').classList.remove('visible');
+    setLoading(true);
+    animateSteps();
+
+    try {
+      const res = await fetch('/api/discover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ song, attributes })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+
+      setLoading(false);
+      renderProfile(data.song);
+      renderRecs(data.recommendations);
+
+    } catch (err) {
+      setLoading(false);
+      document.getElementById('emptyState').style.display = 'block';
+      showError(err.message || 'Network error — please try again.');
+    }
+  }
+
+  // ── Render profile ─────────────────────────────────────────────────────────
+  function renderProfile(song) {
+    document.getElementById('profileName').textContent   = song.title  || '—';
+    document.getElementById('profileArtist').textContent = song.artist || '—';
+    const a = song.attributes || {};
+    document.getElementById('attrGrid').innerHTML = [
+      { key:'BPM',          val: a.bpm  || '—',                        pct: null },
+      { key:'Key',          val: a.key  || '—',                        pct: null },
+      { key:'Mood',         val: a.mood || '—',                        pct: null },
+      { key:'Energy',       val: pct(a.energy),       pct: a.energy       || 0 },
+      { key:'Danceability', val: pct(a.danceability), pct: a.danceability || 0 },
+      { key:'Genre',        val: (a.genre_tags||[]).join(', ')||'—',   pct: null }
+    ].map(c=>`
+      <div class="attr-card">
+        <div class="attr-key">${c.key}</div>
+        <div class="attr-val">${esc(c.val)}</div>
+        ${c.pct!==null?`<div class="attr-bar"><div class="attr-fill" style="width:${Math.round(c.pct*100)}%"></div></div>`:''}
+      </div>`).join('');
+    document.getElementById('songProfile').classList.add('visible');
+  }
+
+  // ── Render recs ────────────────────────────────────────────────────────────
+  function renderRecs(recs) {
+    const list = document.getElementById('recList');
+    list.innerHTML = `<div class="results-header">similar tracks &nbsp;(${recs.length} found)</div>`;
+
+    recs.forEach((r, i) => {
+      const id       = 'rec_' + i;
+      const popClass = 'pop-' + (r.popularity||'mainstream').toLowerCase();
+      const scoreNum = Math.round((r.similarity_score||0.8)*100);
+
+      const card = document.createElement('div');
+      card.className = 'rec-card'; card.id = id;
+      card.style.animationDelay = (i*55)+'ms';
+      card.innerHTML = `
+        <div class="rec-body">
+          <div class="rec-num">${String(i+1).padStart(2,'0')}</div>
+          <div class="rec-content">
+            <div class="rec-title">${esc(r.title)}</div>
+            <div class="rec-meta">
+              ${esc(r.artist)} · ${esc(r.year||'')}
+              <span class="pop-badge ${popClass}">${esc(r.popularity||'')}</span>
+            </div>
+            <div class="rec-tags">
+              ${(r.match_attributes||[]).map(t=>`<span class="tag match">↑ ${esc(t)}</span>`).join('')}
+              ${(r.genre_tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
+              <span class="tag score">${scoreNum}% match</span>
+            </div>
+            <div class="rec-why">${esc(r.why||'')}</div>
+            <div class="rating-row">
+              <span class="rating-lbl">helpful?</span>
+              <button class="rate-btn up"   onclick="rate('${id}', 1)">▲ yes</button>
+              <button class="rate-btn down" onclick="rate('${id}',-1)">▼ no</button>
+              <span class="rate-resp" id="resp_${id}"></span>
+            </div>
+          </div>
+        </div>`;
+      list.appendChild(card);
+      ratings[id] = 0;
+    });
+
+    list.style.display = 'block';
+    updateBias();
+  }
+
+  // ── Ratings ────────────────────────────────────────────────────────────────
+  function rate(id, val) {
+    const card = document.getElementById(id);
+    const up   = card.querySelector('.rate-btn.up');
+    const down = card.querySelector('.rate-btn.down');
+    const resp = document.getElementById('resp_'+id);
+    if (ratings[id] === val) {
+      ratings[id] = 0;
+      up.classList.remove('active'); down.classList.remove('active'); resp.textContent = '';
+    } else {
+      ratings[id] = val;
+      up.classList.toggle('active',   val===1);
+      down.classList.toggle('active', val===-1);
+      resp.textContent = val===1 ? 'thanks!' : 'noted';
+    }
+    updateBias();
+  }
+
+  function updateBias() {
+    const vals  = Object.values(ratings);
+    const rated = vals.filter(v => v!==0);
+    if (rated.length < 2) return;
+    const total = rated.length;
+    const ups   = rated.filter(v=>v===1).length;
+    const downs = rated.filter(v=>v===-1).length;
+    document.getElementById('biasBars').innerHTML = `
+      <div class="bias-row">
+        <span class="bias-lbl">helpful</span>
+        <div class="bias-track"><div class="bias-prog" style="width:${Math.round(ups/total*100)}%;background:var(--accent)"></div></div>
+        <span class="bias-num">${ups}/${total}</span>
+      </div>
+      <div class="bias-row">
+        <span class="bias-lbl">not helpful</span>
+        <div class="bias-track"><div class="bias-prog" style="width:${Math.round(downs/total*100)}%;background:var(--danger)"></div></div>
+        <span class="bias-num">${downs}/${total}</span>
+      </div>`;
+    document.getElementById('biasPanel').classList.add('visible');
+  }
+</script>
+</body>
+</html>
