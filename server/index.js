@@ -41,7 +41,6 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.post('/api/discover', async (req, res) => {
   const { song, attributes } = req.body;
 
-  // Validate input
   if (!song || typeof song !== 'string' || song.trim().length < 2)
     return res.status(400).json({ error: 'Please provide a song name.' });
 
@@ -91,9 +90,9 @@ Return ONLY raw JSON, no fences, no extra text:
       return res.status(502).json({ error: 'AI service error — please try again.' });
     }
 
-    const data  = await groqRes.json();
-    const raw   = data.choices?.[0]?.message?.content || '';
-    const clean = raw.replace(/```json|```/g, '').trim();
+    const data   = await groqRes.json();
+    const raw    = data.choices?.[0]?.message?.content || '';
+    const clean  = raw.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
 
     return res.json(parsed);
@@ -116,8 +115,26 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🎵  Music Discovery Engine`);
-  console.log(`    http://localhost:${PORT}`);
-  console.log(`    Groq key loaded: ${process.env.GROQ_API_KEY ? 'YES ✓' : 'NO ✗ — add GROQ_API_KEY to .env'}\n`);
+// ── Start ─────────────────────────────────────────────────────────────────────
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n🎵  Music Discovery Engine running on port ${PORT}`);
+  console.log(`    Groq key: ${process.env.GROQ_API_KEY ? 'YES ✓' : 'NO ✗'}\n`);
+
+  // Keep-alive ping every 14 minutes to prevent free-tier sleep
+  const publicURL =
+    process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` :
+    process.env.RENDER_EXTERNAL_URL   ? process.env.RENDER_EXTERNAL_URL :
+    null;
+
+  if (publicURL) {
+    console.log(`    Keep-alive → ${publicURL}/api/health`);
+    setInterval(async () => {
+      try {
+        await fetch(`${publicURL}/api/health`);
+        console.log(`[keep-alive] ${new Date().toISOString()} ok`);
+      } catch (e) {
+        console.warn(`[keep-alive] failed: ${e.message}`);
+      }
+    }, 14 * 60 * 1000);
+  }
 });
