@@ -415,9 +415,11 @@
         linksHTML += `<button class="stream-btn fallback" onclick="openUrl(${idx},'spotifyfb')">Search Spotify</button>`;
       }
       if (ytUrl) {
-        linksHTML += `<button class="stream-btn youtube" onclick="openUrl(${idx},'youtube')">${YOUTUBE_ICON} YouTube</button>`;
+        // viaApi=true means direct video link, false means search link — both work
+        const ytLabel = r.youtube?.viaApi ? `${YOUTUBE_ICON} YouTube` : `${YOUTUBE_ICON} Search YouTube`;
+        linksHTML += `<button class="stream-btn youtube" onclick="openUrl(${idx},'youtube')">${ytLabel}</button>`;
       } else {
-        linksHTML += `<button class="stream-btn fallback" onclick="openUrl(${idx},'youtubefb')">Search YouTube</button>`;
+        linksHTML += `<button class="stream-btn youtube" onclick="openUrl(${idx},'youtubefb')">${YOUTUBE_ICON} Search YouTube</button>`;
       }
       if (prevUrl) {
         linksHTML += `<button class="preview-btn" id="${prevId}" onclick="togglePreview(${idx},'${prevId}')">▶ preview</button>`;
@@ -425,7 +427,8 @@
       linksHTML += '</div>';
 
       // Save URLs into store — clean, no encoding problems
-      urlStore[i] = { spotUrl, ytUrl, sfbUrl, ytfbUrl, prevUrl };
+      // ytUrl is always set (either direct video or search link), sfbUrl/ytfbUrl are fallbacks if API missed
+      urlStore[i] = { spotUrl, ytUrl: ytUrl || ytfbUrl, sfbUrl, ytfbUrl, prevUrl };
 
       const card = document.createElement('div');
       card.className = `rec-card confidence-${confidence}`;
