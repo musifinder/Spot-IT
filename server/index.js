@@ -26,9 +26,31 @@ const limiter = rateLimit({
 app.use('/api/discover', limiter);
 app.use(express.static(path.join(__dirname, '../public')));
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+const norm = s => String(s || '').toLowerCase()
+  .replace(/\(.*?\)/g, '')       // remove (feat. ...) etc
+  .replace(/\[.*?\]/g, '')       // remove [remix] etc
+  .replace(/[^a-z0-9\s]/g, '')   // strip punctuation
+  .replace(/\s+/g, ' ')
+  .trim();
+
+// Score how well two strings match (0-1)
+function matchScore(a, b) {
+  const na = norm(a), nb = norm(b);
+  if (na === nb) return 1;
+  if (na.includes(nb) || nb.includes(na)) return 0.9;
+  // word overlap
+  const wa = new Set(na.split(' '));
+  const wb = new Set(nb.split(' '));
+  const overlap = [...wa].filter(w => wb.has(w) && w.length > 2).length;
+  return overlap / Math.max(wa.size, wb.size);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SPOTIFY
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
 let _spotifyToken = null;
 let _spotifyExpiry = 0;
 
@@ -46,6 +68,7 @@ async function getSpotifyToken() {
       body: 'grant_type=client_credentials'
     });
     const d = await res.json();
+    if (!d.access_token) { console.warn('[Spotify] bad token response:', d); return null; }
     _spotifyToken  = d.access_token;
     _spotifyExpiry = Date.now() + (d.expires_in - 60) * 1000;
     return _spotifyToken;
@@ -58,120 +81,167 @@ async function getSpotifyToken() {
 async function spotifySearch(title, artist) {
   const token = await getSpotifyToken();
   if (!token) return null;
-  try {
-    const q   = encodeURIComponent(`track:${title} artist:${artist}`);
-    const res = await fetch(
-      `https://api.spotify.com/v1/search?q=${q}&type=track&limit=3`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    const d     = await res.json();
-    const items = d?.tracks?.items || [];
-    if (!items.length) return null;
 
-    // Pick best match — prefer exact title+artist match
-    const norm  = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const nt    = norm(title);
-    const na    = norm(artist);
-    const exact = items.find(t =>
-      norm(t.name) === nt &&
-      t.artists.some(a => norm(a.name) === na)
-    ) || items[0];
+  // Try multiple query strategies, take best match
+  const queries = [
+    `track:${title} artist:${artist}`,          // strict field search
+    `${title} ${artist}`,                         // loose search
+    `${title} ${artist.split(' ')[0]}`            // first word of artist
+  ];
 
-    return {
-      url:      exact.external_urls.spotify,
-      uri:      exact.uri,
-      preview:  exact.preview_url || null,
-      image:    exact.album?.images?.[1]?.url || exact.album?.images?.[0]?.url || null,
-      verified: true,
-      exactMatch: !!(
-        norm(exact.name) === nt &&
-        exact.artists.some(a => norm(a.name) === na)
-      )
-    };
-  } catch (e) {
-    console.warn('[Spotify] search error:', e.message);
+  let bestResult = null;
+  let bestScore  = 0;
+
+  for (const q of queries) {
+    try {
+      const res = await fetch(
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=5`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const d     = await res.json();
+      const items = d?.tracks?.items || [];
+
+      for (const track of items) {
+        const titleScore  = matchScore(track.name, title);
+        const artistScore = Math.max(...(track.artists || []).map(a => matchScore(a.name, artist)));
+        const combined    = (titleScore * 0.6) + (artistScore * 0.4);
+
+        console.log(`  [Spotify] "${track.name}" by ${track.artists.map(a=>a.name).join(',')} → score ${combined.toFixed(2)}`);
+
+        if (combined > bestScore) {
+          bestScore  = combined;
+          bestResult = { track, score: combined };
+        }
+      }
+
+      // Good enough — stop trying more queries
+      if (bestScore >= 0.85) break;
+
+    } catch (e) {
+      console.warn('[Spotify] search error:', e.message);
+    }
+  }
+
+  // Reject if score too low — likely wrong track
+  if (!bestResult || bestScore < 0.5) {
+    console.log(`  [Spotify] no confident match for "${title}" by "${artist}" (best: ${bestScore.toFixed(2)})`);
     return null;
   }
+
+  const t = bestResult.track;
+  return {
+    url:        t.external_urls.spotify,
+    preview:    t.preview_url || null,
+    image:      t.album?.images?.[1]?.url || t.album?.images?.[0]?.url || null,
+    matchScore: bestScore,
+    verified:   bestScore >= 0.85
+  };
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
 // YOUTUBE
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
 async function youtubeSearch(title, artist) {
   const key = process.env.YOUTUBE_API_KEY;
   if (!key) return null;
-  try {
-    const q   = encodeURIComponent(`${title} ${artist} official audio`);
-    const res = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&maxResults=3&key=${key}`
-    );
-    const d     = await res.json();
-    const items = d?.items || [];
-    if (!items.length) return null;
 
-    // Pick result whose title contains both song and artist name
-    const norm  = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const nt    = norm(title);
-    const na    = norm(artist);
-    const best  = items.find(v => {
-      const vt = norm(v.snippet.title);
-      return vt.includes(nt) && vt.includes(na);
-    }) || items[0];
+  // Try multiple query strategies
+  const queries = [
+    `${title} ${artist} official audio`,
+    `${title} ${artist} official video`,
+    `${title} ${artist}`
+  ];
 
-    return {
-      url:       `https://www.youtube.com/watch?v=${best.id.videoId}`,
-      videoId:   best.id.videoId,
-      thumbnail: best.snippet?.thumbnails?.medium?.url || null,
-      verified:  true,
-      exactMatch: !!(
-        norm(best.snippet.title).includes(nt) &&
-        norm(best.snippet.title).includes(na)
-      )
-    };
-  } catch (e) {
-    console.warn('[YouTube] search error:', e.message);
+  let bestResult = null;
+  let bestScore  = 0;
+
+  for (const q of queries) {
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q)}&type=video&maxResults=5&key=${key}`
+      );
+      const d     = await res.json();
+
+      if (d.error) {
+        console.warn('[YouTube] API error:', d.error.message);
+        return null;
+      }
+
+      const items = d?.items || [];
+
+      for (const item of items) {
+        const vtitle      = item.snippet?.title || '';
+        const vchannel    = item.snippet?.channelTitle || '';
+        const titleScore  = matchScore(vtitle, title);
+        const artistScore = Math.max(
+          matchScore(vtitle, artist),
+          matchScore(vchannel, artist)
+        );
+        const combined = (titleScore * 0.6) + (artistScore * 0.4);
+
+        console.log(`  [YouTube] "${vtitle}" → score ${combined.toFixed(2)}`);
+
+        if (combined > bestScore) {
+          bestScore  = combined;
+          bestResult = { item, score: combined };
+        }
+      }
+
+      if (bestScore >= 0.75) break;
+
+    } catch (e) {
+      console.warn('[YouTube] search error:', e.message);
+    }
+  }
+
+  if (!bestResult || bestScore < 0.4) {
+    console.log(`  [YouTube] no confident match for "${title}" by "${artist}" (best: ${bestScore.toFixed(2)})`);
     return null;
   }
+
+  const item = bestResult.item;
+  return {
+    url:        `https://www.youtube.com/watch?v=${item.id.videoId}`,
+    videoId:    item.id.videoId,
+    thumbnail:  item.snippet?.thumbnails?.medium?.url || null,
+    matchScore: bestScore,
+    verified:   bestScore >= 0.75
+  };
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// CROSS-CHECK: verify a single recommendation against both platforms
-// Returns enriched rec, or null if unverifiable
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
+// CROSS-CHECK
+// ─────────────────────────────────────────────────────────────────────────────
 async function crossCheck(rec) {
+  console.log(`\n[cross-check] "${rec.title}" by ${rec.artist}`);
+
   const [spotify, youtube] = await Promise.all([
     spotifySearch(rec.title, rec.artist),
     youtubeSearch(rec.title, rec.artist)
   ]);
 
-  const hasSpotify = !!spotify;
-  const hasYoutube = !!youtube;
-  const spotifyExact = spotify?.exactMatch;
-  const youtubeExact = youtube?.exactMatch;
+  const spotifyOk = spotify?.verified;
+  const youtubeOk = youtube?.verified;
+  const spotifyFound = !!spotify;
+  const youtubeFound = !!youtube;
 
-  // Confidence scoring:
-  // Both exact  → verified ✓✓
-  // One exact   → verified ✓
-  // Both fuzzy  → uncertain (still include but flag)
-  // Neither     → drop the track
-  if (!hasSpotify && !hasYoutube) {
-    console.log(`[cross-check] DROPPED: "${rec.title}" by ${rec.artist} — not found on either platform`);
+  // Confidence levels
+  let confidence;
+  if (spotifyOk && youtubeOk)          confidence = 'high';
+  else if (spotifyOk || youtubeOk)     confidence = 'medium';
+  else if (spotifyFound || youtubeFound) confidence = 'low';
+  else {
+    console.log(`  → DROPPED (not found on either platform)`);
     return null;
   }
 
-  let confidence = 'low';
-  if (spotifyExact && youtubeExact) confidence = 'high';
-  else if (spotifyExact || youtubeExact) confidence = 'medium';
-  else if (hasSpotify && hasYoutube) confidence = 'low';
-
-  console.log(`[cross-check] "${rec.title}" by ${rec.artist} — Spotify:${hasSpotify}(exact:${spotifyExact}) YT:${hasYoutube}(exact:${youtubeExact}) → ${confidence}`);
-
+  console.log(`  → ${confidence.toUpperCase()} (Spotify:${spotifyOk ? '✓' : spotifyFound ? '~' : '✗'} YouTube:${youtubeOk ? '✓' : youtubeFound ? '~' : '✗'})`);
   return { ...rec, spotify, youtube, confidence };
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// GROQ: generate recommendations
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
+// GROQ
+// ─────────────────────────────────────────────────────────────────────────────
 function extractJSON(raw) {
   let text = raw.replace(/```json|```/g, '').trim();
   try { return JSON.parse(text); } catch (_) {}
@@ -183,42 +253,37 @@ function extractJSON(raw) {
   return JSON.parse(text.replace(/[\x00-\x1F\x7F]/g, ' '));
 }
 
-async function groqRecommend(song, attrList, count = 10, exclude = []) {
+async function groqRecommend(song, attrList, count = 12, exclude = []) {
   const GROQ_KEY = process.env.GROQ_API_KEY;
   if (!GROQ_KEY) throw new Error('GROQ_API_KEY missing');
 
   const excludeNote = exclude.length
-    ? `Do NOT include these tracks (already used): ${exclude.map(e => `"${e.title}" by ${e.artist}`).join(', ')}.`
+    ? `Do NOT include: ${exclude.map(e => `"${e.title}" by ${e.artist}`).join(', ')}.`
     : '';
 
-  const systemPrompt = `You are a music recommendation engine. Respond with valid JSON only — no markdown, no fences, no text outside the JSON.`;
-
-  const userPrompt = `Find ${count} songs similar to "${song}" based on: ${attrList}.
+  const prompt = `Find ${count} real songs similar to "${song}" based on: ${attrList}.
 ${excludeNote}
 
-RULES:
-- Only recommend songs that VERIFIABLY EXIST on Spotify and YouTube
-- At least 60% must be underground or emerging artists
-- Diverse eras, genres, global artists welcome
-- Be specific: exact song titles and artist names as they appear on streaming platforms
+STRICT RULES:
+- Every song must genuinely exist and be streamable on Spotify and YouTube right now
+- Use the EXACT title and artist name as it appears on Spotify (correct capitalisation, no extra words)
+- At least 60% should be underground or emerging artists
+- No made-up, obscure, or AI-hallucinated tracks
 
-Respond ONLY with this JSON:
+Return ONLY this JSON, nothing else:
 {"song":{"title":"string","artist":"string","attributes":{"bpm":"string","key":"string","energy":0.7,"danceability":0.6,"mood":"string","genre_tags":["string"]}},"recommendations":[{"title":"string","artist":"string","year":"string","popularity":"underground|emerging|mainstream","match_attributes":["string"],"similarity_score":0.9,"why":"string","genre_tags":["string"]}]}`;
 
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
-    headers: {
-      'Content-Type':  'application/json',
-      'Authorization': `Bearer ${GROQ_KEY}`
-    },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` },
     body: JSON.stringify({
       model:           'llama-3.3-70b-versatile',
-      temperature:     0.5,
+      temperature:     0.4,
       max_tokens:      2500,
       response_format: { type: 'json_object' },
       messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user',   content: userPrompt   }
+        { role: 'system', content: 'You are a music recommendation engine. Respond with valid JSON only. Every song you recommend must be a real, verifiable track on Spotify and YouTube.' },
+        { role: 'user',   content: prompt }
       ]
     })
   });
@@ -230,71 +295,62 @@ Respond ONLY with this JSON:
   }
 
   const data = await res.json();
-  const raw  = data.choices?.[0]?.message?.content || '';
-  return extractJSON(raw);
+  return extractJSON(data.choices?.[0]?.message?.content || '');
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// MAIN PIPELINE: Groq → Cross-check → Refill if needed → Return 8 verified
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
+// PIPELINE
+// ─────────────────────────────────────────────────────────────────────────────
 async function discoverPipeline(song, attrList) {
-  const TARGET = 8;
-  const verified = [];
-  const excluded = [];
-  let songMeta   = null;
-  let round      = 0;
+  const TARGET    = 8;
+  const verified  = [];
+  const excluded  = [];
+  let   songMeta  = null;
   const MAX_ROUNDS = 3;
 
-  while (verified.length < TARGET && round < MAX_ROUNDS) {
-    round++;
+  for (let round = 1; round <= MAX_ROUNDS && verified.length < TARGET; round++) {
     const needed = TARGET - verified.length;
-    // Ask for more than needed to account for drop-offs
-    const askFor = Math.min(needed + 4, 12);
+    const askFor = needed + 5;
 
-    console.log(`\n[pipeline] Round ${round} — need ${needed} more, asking Groq for ${askFor}`);
+    console.log(`\n══ Pipeline round ${round} — need ${needed}, asking for ${askFor} ══`);
+
     const groqResult = await groqRecommend(song, attrList, askFor, excluded);
-
     if (!songMeta && groqResult.song) songMeta = groqResult.song;
 
     const candidates = (groqResult.recommendations || []).slice(0, askFor);
     excluded.push(...candidates.map(r => ({ title: r.title, artist: r.artist })));
 
-    // Cross-check all candidates in parallel
     const results = await Promise.all(candidates.map(c => crossCheck(c)));
     const passed  = results.filter(Boolean);
 
-    console.log(`[pipeline] Round ${round} — ${passed.length}/${candidates.length} passed cross-check`);
+    console.log(`\n══ Round ${round} result: ${passed.length}/${candidates.length} passed ══`);
     verified.push(...passed.slice(0, needed));
   }
 
-  console.log(`[pipeline] Final: ${verified.length} verified tracks\n`);
+  console.log(`\n✓ Final: ${verified.length} verified tracks`);
   return { song: songMeta, recommendations: verified };
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
 // ROUTES
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
 app.post('/api/discover', async (req, res) => {
   const { song, attributes } = req.body;
-
   if (!song || typeof song !== 'string' || song.trim().length < 2)
     return res.status(400).json({ error: 'Please provide a song name.' });
 
-  const ALLOWED = ['tempo', 'melody', 'rhythm', 'lyrics', 'vibe', 'production'];
+  const ALLOWED = ['tempo','melody','rhythm','lyrics','vibe','production'];
   const attrs   = (attributes || []).filter(a => ALLOWED.includes(a));
   if (!attrs.length)
     return res.status(400).json({ error: 'Select at least one attribute.' });
 
   try {
     const result = await discoverPipeline(song.trim(), attrs.join(', '));
-
     if (!result.recommendations.length)
-      return res.status(502).json({ error: 'Could not verify any recommendations — try a different song.' });
-
+      return res.status(502).json({ error: 'Could not verify any recommendations — try a more well-known song.' });
     return res.json(result);
-
   } catch (err) {
-    console.error('[/api/discover] error:', err.message);
+    console.error('[/api/discover]', err.message);
     if (err.message === 'RATE_LIMIT')
       return res.status(429).json({ error: 'AI service busy — wait a moment and try again.' });
     return res.status(500).json({ error: 'Server error — please try again.' });
@@ -316,7 +372,7 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🎵  Music Discovery Engine — v8`);
+  console.log(`\n🎵  Music Discovery Engine`);
   console.log(`    Port:    ${PORT}`);
   console.log(`    Groq:    ${process.env.GROQ_API_KEY          ? '✓' : '✗ MISSING'}`);
   console.log(`    Spotify: ${process.env.SPOTIFY_CLIENT_ID     ? '✓' : '✗ links disabled'}`);
