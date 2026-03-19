@@ -164,6 +164,16 @@
     .bias-prog { height:100%; border-radius:2px; transition:width .5s ease; }
     .bias-num { font-family:var(--font-mono); font-size:10px; color:var(--muted); width:30px; text-align:right; }
 
+    /* Stats panel */
+    .stats-panel { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:1.25rem; }
+    .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:.7rem 1rem; flex:1; min-width:120px; }
+    .stat-num { font-size:1.4rem; font-weight:600; font-family:var(--font-mono); color:var(--accent); line-height:1; }
+    .stat-lbl { font-size:11px; color:var(--muted); margin-top:3px; font-family:var(--font-mono); letter-spacing:.05em; }
+
+    /* Learning badge */
+    .learning-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(124,106,245,.08); border:1px solid rgba(124,106,245,.2); border-radius:20px; padding:4px 12px; font-size:11px; color:#b0a8ff; font-family:var(--font-mono); margin-bottom:1.25rem; }
+    .learning-badge::before { content:''; width:6px; height:6px; background:var(--accent2); border-radius:50%; animation:pulse 2s ease-in-out infinite; }
+
     /* Footer */
     .footer { margin-top:3rem; text-align:center; font-family:var(--font-mono); font-size:10px; color:var(--muted); opacity:.4; line-height:1.9; }
   </style>
@@ -181,6 +191,14 @@
     <span>⟡</span>
     <span><strong>Triple-verified pipeline:</strong> Groq AI generates matches → Spotify confirms the track exists → YouTube cross-checks → only verified results shown. Takes a few extra seconds but every result is real.</span>
   </div>
+
+  <!-- Live stats -->
+  <div class="stats-panel" id="statsPanel" style="display:none;">
+    <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-lbl">total ratings</div></div>
+    <div class="stat-card"><div class="stat-num" id="statHelpful">0%</div><div class="stat-lbl">helpful rate</div></div>
+    <div class="stat-card" id="statGenreCard" style="display:none;"><div class="stat-num" style="font-size:.9rem;" id="statGenre">—</div><div class="stat-lbl">top genre</div></div>
+  </div>
+  <div class="learning-badge" id="learningBadge" style="display:none;">AI is learning from user ratings</div>
 
   <div class="search-box">
     <div class="search-row">
@@ -241,6 +259,8 @@
   const SPOTIFY_ICON = `<svg class="stream-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`;
   const YOUTUBE_ICON = `<svg class="stream-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`;
 
+  loadStats();
+
   document.querySelectorAll('.chip').forEach(c =>
     c.addEventListener('click', () => c.classList.toggle('active'))
   );
@@ -249,7 +269,9 @@
   });
 
   const ratings  = {};
-  const urlStore  = {};   // stores urls by rec index so onclick can find them cleanly
+  const urlStore  = {};
+  const recStore  = {};   // stores full rec data by index for rating POSTs
+  let   currentSong = '';  // tracks what song was searched   // stores urls by rec index so onclick can find them cleanly
 
   function openUrl(idx, type) {
     const u = urlStore[idx];
@@ -329,6 +351,7 @@
     const attributes = getActiveAttrs();
     if (!attributes.length) { showError('Select at least one attribute to match.'); return; }
 
+    currentSong = song;
     document.getElementById('songProfile').classList.remove('visible');
     document.getElementById('recList').style.display = 'none';
     document.getElementById('emptyState').style.display = 'none';
@@ -429,6 +452,7 @@
       // Save URLs into store — clean, no encoding problems
       // ytUrl is always set (either direct video or search link), sfbUrl/ytfbUrl are fallbacks if API missed
       urlStore[i] = { spotUrl, ytUrl: ytUrl || ytfbUrl, sfbUrl, ytfbUrl, prevUrl };
+      recStore[i] = r;   // store full rec for rating POST
 
       const card = document.createElement('div');
       card.className = `rec-card confidence-${confidence}`;
@@ -473,15 +497,73 @@
     const up   = card.querySelector('.rate-btn.up');
     const down = card.querySelector('.rate-btn.down');
     const resp = document.getElementById('resp_'+id);
-    if (ratings[id]===val) {
+
+    const prev = ratings[id];
+    if (prev === val) {
+      // Toggle off — undo previous rating
+      if (prev !== 0) {
+        const idx     = parseInt(id.replace('rec_', ''));
+        const recData = recStore[idx];
+        if (recData) postRating(recData, -val); // reverse it
+      }
       ratings[id]=0; up.classList.remove('active'); down.classList.remove('active'); resp.textContent='';
     } else {
+      // New or changed rating
+      const idx     = parseInt(id.replace('rec_', ''));
+      const recData = recStore[idx];
+      if (recData) postRating(recData, val);
       ratings[id]=val;
       up.classList.toggle('active',val===1);
       down.classList.toggle('active',val===-1);
       resp.textContent = val===1?'thanks!':'noted';
     }
     updateBias();
+  }
+
+  // POST rating to server → saved in Supabase → feeds back into AI
+  async function postRating(rec, val) {
+    try {
+      await fetch('/api/rate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          searchSong:  currentSong,
+          recTitle:    rec.title,
+          recArtist:   rec.artist,
+          genreTags:   rec.genre_tags   || [],
+          matchAttrs:  rec.match_attributes || [],
+          popularity:  rec.popularity   || 'unknown',
+          rating:      val
+        })
+      });
+      // Refresh stats after rating
+      loadStats();
+    } catch (e) {
+      console.warn('Rating not saved:', e.message);
+    }
+  }
+
+  // Load and display live stats
+  async function loadStats() {
+    try {
+      const res  = await fetch('/api/stats');
+      const data = await res.json();
+      if (!data || data.total === 0) return;
+
+      document.getElementById('statTotal').textContent   = data.total;
+      document.getElementById('statHelpful').textContent = (data.helpfulPct || 0) + '%';
+      document.getElementById('statsPanel').style.display = 'flex';
+
+      if (data.topGenres?.length) {
+        document.getElementById('statGenre').textContent    = data.topGenres[0];
+        document.getElementById('statGenreCard').style.display = 'block';
+      }
+
+      // Show learning badge once we have enough data to actually influence results
+      if (data.total >= 10) {
+        document.getElementById('learningBadge').style.display = 'inline-flex';
+      }
+    } catch (e) { /* stats are optional */ }
   }
 
   function updateBias() {
