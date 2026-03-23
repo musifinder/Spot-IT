@@ -1,9 +1,8 @@
 'use strict';
 require('dotenv').config();
 
-// ── Global crash prevention — must be first ───────────────────────────────────
-process.on('uncaughtException',  e => console.error('[crash] uncaughtException:', e.message, e.stack));
-process.on('unhandledRejection', (r, p) => console.error('[crash] unhandledRejection:', r));
+process.on('uncaughtException',  e => console.error('[crash] uncaughtException:', e.message));
+process.on('unhandledRejection', r => console.error('[crash] unhandledRejection:', r));
 
 const express   = require('express');
 const cors      = require('cors');
@@ -13,10 +12,7 @@ const path      = require('path');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// ── Trust proxy (Railway sits behind load balancer) ───────────────────────────
 app.set('trust proxy', 1);
-
-// ── Middleware ────────────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json({ limit: '10kb' }));
 app.use((req, res, next) => {
@@ -25,25 +21,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// ── Rate limiter ──────────────────────────────────────────────────────────────
 try {
   const limiter = rateLimit({
-    windowMs: 10 * 60 * 1000,
-    max: 30,
-    standardHeaders: true,
-    legacyHeaders: false,
-    validate: { trustProxy: false }, // suppress express-rate-limit proxy warning
-    message: { error: 'Too many searches — wait a few minutes and try again.' }
+    windowMs: 10 * 60 * 1000, max: 30,
+    standardHeaders: true, legacyHeaders: false,
+    validate: { trustProxy: false },
+    message: { error: 'Too many requests — wait a few minutes.' }
   });
   app.use('/api/discover', limiter);
 } catch (e) {
-  console.warn('[startup] rate limiter failed to init:', e.message, '— continuing without it');
+  console.warn('[startup] rate limiter failed:', e.message);
 }
 
-// ── Static files ──────────────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, '../public')));
 
-// ── Safe fetch with timeout ───────────────────────────────────────────────────
+// ── Safe fetch ────────────────────────────────────────────────────────────────
 async function safeFetch(url, options = {}) {
   try {
     const controller = new AbortController();
@@ -75,54 +67,149 @@ function matchScore(a, b) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// SUPABASE
+// SUPABASE — auth + quota + ratings
 // ═════════════════════════════════════════════════════════════════════════════
-const SUPA_URL    = (process.env.SUPABASE_URL  || '').trim();
-const SUPA_KEY    = (process.env.SUPABASE_KEY  || '').trim();
+const SUPA_URL    = (process.env.SUPABASE_URL || '').trim();
+const SUPA_KEY    = (process.env.SUPABASE_KEY || '').trim();
 const supaEnabled = !!(SUPA_URL && SUPA_KEY);
 
-function supaHeaders() {
+const FREE_DAILY_LIMIT = 5;
+
+function supaHeaders(userToken) {
   return {
     'Content-Type':  'application/json',
     'apikey':        SUPA_KEY,
-    'Authorization': `Bearer ${SUPA_KEY}`,
-    'Prefer':        'return=minimal'
+    'Authorization': userToken ? `Bearer ${userToken}` : `Bearer ${SUPA_KEY}`,
+    'Prefer':        'return=representation'
   };
 }
 
-async function saveRating({ searchSong, recTitle, recArtist, genreTags, matchAttrs, popularity, rating }) {
-  if (!supaEnabled) return;
+// Verify a Supabase JWT and return the user, or null
+async function verifyUser(token) {
+  if (!supaEnabled || !token) return null;
   try {
-    const res = await safeFetch(`${SUPA_URL}/rest/v1/ratings`, {
-      method:  'POST',
-      headers: supaHeaders(),
-      body:    JSON.stringify({
-        song:        String(searchSong  || '').slice(0, 200),
-        rec_title:   String(recTitle    || '').slice(0, 200),
-        rec_artist:  String(recArtist   || '').slice(0, 200),
-        genre_tags:  Array.isArray(genreTags)  ? genreTags  : [],
-        match_attrs: Array.isArray(matchAttrs) ? matchAttrs : [],
-        popularity:  String(popularity  || 'unknown').slice(0, 50),
-        rating:      rating > 0 ? 1 : -1
-      })
+    const res = await safeFetch(`${SUPA_URL}/auth/v1/user`, {
+      headers: {
+        'apikey':        SUPA_KEY,
+        'Authorization': `Bearer ${token}`
+      }
     });
-    if (res && res.ok) {
-      console.log(`[Supabase] saved: "${recTitle}" ${rating > 0 ? '👍' : '👎'}`);
-    } else {
-      const body = res ? await res.text().catch(() => '') : '';
-      console.warn('[Supabase] save failed:', res?.status, body.slice(0, 100));
-    }
+    if (!res || !res.ok) return null;
+    return await res.json();
   } catch (e) {
-    console.warn('[Supabase] saveRating error:', e.message);
+    return null;
   }
 }
 
+// Get or create a user profile row
+async function getProfile(userId) {
+  if (!supaEnabled) return null;
+  try {
+    const res = await safeFetch(
+      `${SUPA_URL}/rest/v1/profiles?id=eq.${userId}&select=*`,
+      { headers: supaHeaders() }
+    );
+    if (!res || !res.ok) return null;
+    const rows = await res.json();
+    return rows?.[0] || null;
+  } catch (e) { return null; }
+}
+
+async function createProfile(userId, email) {
+  if (!supaEnabled) return null;
+  try {
+    const res = await safeFetch(`${SUPA_URL}/rest/v1/profiles`, {
+      method:  'POST',
+      headers: { ...supaHeaders(), 'Prefer': 'return=representation' },
+      body:    JSON.stringify({
+        id:           userId,
+        email:        email,
+        tier:         'free',
+        searches_today: 0,
+        last_search_date: new Date().toISOString().slice(0, 10)
+      })
+    });
+    if (!res || !res.ok) return null;
+    const rows = await res.json();
+    return rows?.[0] || null;
+  } catch (e) { return null; }
+}
+
+// Check quota and increment — returns { allowed, remaining, tier }
+async function checkAndIncrementQuota(userId) {
+  if (!supaEnabled) return { allowed: true, remaining: 999, tier: 'free' };
+
+  try {
+    let profile = await getProfile(userId);
+    if (!profile) profile = await createProfile(userId, '');
+    if (!profile) return { allowed: true, remaining: 999, tier: 'free' };
+
+    const today = new Date().toISOString().slice(0, 10);
+    const isPro  = profile.tier === 'pro';
+
+    // Pro users — always allowed
+    if (isPro) {
+      await incrementSearchCount(userId, profile, today);
+      return { allowed: true, remaining: -1, tier: 'pro' };
+    }
+
+    // Reset count if it's a new day
+    let count = profile.searches_today || 0;
+    if (profile.last_search_date !== today) count = 0;
+
+    if (count >= FREE_DAILY_LIMIT) {
+      return { allowed: false, remaining: 0, tier: 'free', limit: FREE_DAILY_LIMIT };
+    }
+
+    await incrementSearchCount(userId, profile, today, count);
+    return {
+      allowed:   true,
+      remaining: FREE_DAILY_LIMIT - (count + 1),
+      tier:      'free',
+      limit:     FREE_DAILY_LIMIT
+    };
+  } catch (e) {
+    console.warn('[quota] check failed:', e.message);
+    return { allowed: true, remaining: 999, tier: 'free' };
+  }
+}
+
+async function incrementSearchCount(userId, profile, today, currentCount) {
+  const newCount = (profile.last_search_date !== today)
+    ? 1
+    : (currentCount !== undefined ? currentCount + 1 : (profile.searches_today || 0) + 1);
+
+  await safeFetch(`${SUPA_URL}/rest/v1/profiles?id=eq.${userId}`, {
+    method:  'PATCH',
+    headers: { ...supaHeaders(), 'Prefer': 'return=minimal' },
+    body:    JSON.stringify({
+      searches_today:    newCount,
+      last_search_date:  today,
+      total_searches:    (profile.total_searches || 0) + 1
+    })
+  });
+}
+
+// Upgrade user to pro (called after Stripe payment — coming soon)
+async function upgradeUser(userId) {
+  if (!supaEnabled) return false;
+  try {
+    const res = await safeFetch(`${SUPA_URL}/rest/v1/profiles?id=eq.${userId}`, {
+      method:  'PATCH',
+      headers: { ...supaHeaders(), 'Prefer': 'return=minimal' },
+      body:    JSON.stringify({ tier: 'pro', upgraded_at: new Date().toISOString() })
+    });
+    return res?.ok || false;
+  } catch (e) { return false; }
+}
+
+// Ratings intelligence
 async function getRatingIntelligence() {
   if (!supaEnabled) return null;
   try {
     const res = await safeFetch(
       `${SUPA_URL}/rest/v1/ratings?select=rec_artist,genre_tags,match_attrs,popularity,rating&order=created_at.desc&limit=500`,
-      { headers: { ...supaHeaders(), 'Prefer': 'return=representation' } }
+      { headers: supaHeaders() }
     );
     if (!res || !res.ok) return null;
     const rows = await res.json();
@@ -133,45 +220,50 @@ async function getRatingIntelligence() {
       if (!map[key]) map[key] = { up: 0, dn: 0 };
       r > 0 ? map[key].up++ : map[key].dn++;
     };
-
-    const genres = {}, artists = {}, pops = {};
+    const genres = {}, artists = {};
     for (const row of rows) {
-      (row.genre_tags  || []).forEach(g => score(genres,  g, row.rating));
+      (row.genre_tags || []).forEach(g => score(genres, g, row.rating));
       score(artists, row.rec_artist, row.rating);
-      score(pops,    row.popularity, row.rating);
     }
-
-    const liked = (map, min = 3) => Object.entries(map)
-      .filter(([, v]) => v.up + v.dn >= min && v.up / (v.up + v.dn) >= 0.7)
-      .sort((a, b) => b[1].up - a[1].up).slice(0, 5).map(([k]) => k);
-
-    const disliked = (map, min = 3) => Object.entries(map)
-      .filter(([, v]) => v.up + v.dn >= min && v.dn / (v.up + v.dn) >= 0.7)
-      .sort((a, b) => b[1].dn - a[1].dn).slice(0, 5).map(([k]) => k);
-
-    const lg = liked(genres), dg = disliked(genres);
-    const la = liked(artists), da = disliked(artists);
+    const liked    = (map, min = 3) => Object.entries(map).filter(([,v]) => v.up+v.dn>=min && v.up/(v.up+v.dn)>=0.7).sort((a,b)=>b[1].up-a[1].up).slice(0,5).map(([k])=>k);
+    const disliked = (map, min = 3) => Object.entries(map).filter(([,v]) => v.up+v.dn>=min && v.dn/(v.up+v.dn)>=0.7).sort((a,b)=>b[1].dn-a[1].dn).slice(0,5).map(([k])=>k);
+    const lg = liked(genres), dg = disliked(genres), la = liked(artists), da = disliked(artists);
     if (!lg.length && !dg.length && !la.length && !da.length) return null;
-
-    let intel = '\n\nUSER TASTE SIGNALS (from real ratings — apply these):\n';
+    let intel = '\n\nUSER TASTE SIGNALS:\n';
     if (lg.length) intel += `- Favour genres: [${lg.join(', ')}]\n`;
     if (dg.length) intel += `- Avoid genres: [${dg.join(', ')}]\n`;
-    if (la.length) intel += `- Users love artists like: [${la.join(', ')}]\n`;
+    if (la.length) intel += `- Users love: [${la.join(', ')}]\n`;
     if (da.length) intel += `- Do NOT recommend: [${da.join(', ')}]\n`;
-    console.log('[Supabase] intelligence ready, rows:', rows.length);
     return intel;
-  } catch (e) {
-    console.warn('[Supabase] intelligence error:', e.message);
-    return null;
-  }
+  } catch (e) { return null; }
+}
+
+async function saveRating({ userId, searchSong, recTitle, recArtist, genreTags, matchAttrs, popularity, rating }) {
+  if (!supaEnabled) return;
+  try {
+    await safeFetch(`${SUPA_URL}/rest/v1/ratings`, {
+      method:  'POST',
+      headers: { ...supaHeaders(), 'Prefer': 'return=minimal' },
+      body:    JSON.stringify({
+        user_id:     userId || null,
+        song:        String(searchSong || '').slice(0, 200),
+        rec_title:   String(recTitle   || '').slice(0, 200),
+        rec_artist:  String(recArtist  || '').slice(0, 200),
+        genre_tags:  Array.isArray(genreTags)  ? genreTags  : [],
+        match_attrs: Array.isArray(matchAttrs) ? matchAttrs : [],
+        popularity:  String(popularity || 'unknown').slice(0, 50),
+        rating:      rating > 0 ? 1 : -1
+      })
+    });
+  } catch (e) { console.warn('[Supabase] saveRating:', e.message); }
 }
 
 async function getStats() {
   if (!supaEnabled) return null;
   try {
     const res = await safeFetch(
-      `${SUPA_URL}/rest/v1/ratings?select=rating,genre_tags,popularity&limit=1000`,
-      { headers: { ...supaHeaders(), 'Prefer': 'return=representation' } }
+      `${SUPA_URL}/rest/v1/ratings?select=rating,genre_tags&limit=1000`,
+      { headers: supaHeaders() }
     );
     if (!res || !res.ok) return null;
     const rows = await res.json();
@@ -181,11 +273,8 @@ async function getStats() {
     const genres  = {};
     rows.forEach(r => (r.genre_tags || []).forEach(g => { genres[g] = (genres[g] || 0) + 1; }));
     const topGenres = Object.entries(genres).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([g])=>g);
-    return { total, helpful, helpfulPct: Math.round(helpful / total * 100), topGenres };
-  } catch (e) {
-    console.warn('[Supabase] stats error:', e.message);
-    return null;
-  }
+    return { total, helpful, helpfulPct: Math.round(helpful/total*100), topGenres };
+  } catch (e) { return null; }
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -240,10 +329,9 @@ async function spotifySearch(title, artist) {
       url:      best.external_urls?.spotify || null,
       preview:  best.preview_url || null,
       image:    best.album?.images?.[1]?.url || best.album?.images?.[0]?.url || null,
-      matchScore: bestScore,
-      verified: bestScore >= 0.85
+      matchScore: bestScore, verified: bestScore >= 0.85
     };
-  } catch (e) { console.warn('[Spotify] error:', e.message); return null; }
+  } catch (e) { return null; }
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -264,20 +352,17 @@ async function youtubeSearch(title, artist) {
         let d; try { d = await res.json(); } catch (e) { d = null; }
         if (d && !d.error && d.items?.length) {
           const item  = d.items[0];
-          const score = matchScore(item.snippet?.title || '', title) * 0.6 +
-                        matchScore(item.snippet?.channelTitle || '', artist) * 0.4;
+          const score = matchScore(item.snippet?.title||'', title)*0.6 + matchScore(item.snippet?.channelTitle||'', artist)*0.4;
           if (score >= 0.4) {
-            const r = { url: `https://www.youtube.com/watch?v=${item.id.videoId}`, videoId: item.id.videoId, thumbnail: item.snippet?.thumbnails?.medium?.url || null, matchScore: score, verified: score >= 0.75, viaApi: true };
-            ytCache.set(ck, r);
-            return r;
+            const r = { url: `https://www.youtube.com/watch?v=${item.id.videoId}`, videoId: item.id.videoId, thumbnail: item.snippet?.thumbnails?.medium?.url||null, matchScore: score, verified: score>=0.75, viaApi: true };
+            ytCache.set(ck, r); return r;
           }
         }
         if (d?.error) console.warn('[YouTube]', d.error.message);
       }
     }
     const r = { url: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} ${artist}`)}`, videoId: null, thumbnail: null, matchScore: 0.6, verified: false, viaApi: false };
-    ytCache.set(ck, r);
-    return r;
+    ytCache.set(ck, r); return r;
   } catch (e) {
     return { url: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} ${artist}`)}`, videoId: null, thumbnail: null, matchScore: 0.5, verified: false, viaApi: false };
   }
@@ -288,21 +373,14 @@ async function youtubeSearch(title, artist) {
 // ═════════════════════════════════════════════════════════════════════════════
 async function crossCheck(rec) {
   try {
-    const [spotify, youtube] = await Promise.all([
-      spotifySearch(rec.title, rec.artist),
-      youtubeSearch(rec.title, rec.artist)
-    ]);
+    const [spotify, youtube] = await Promise.all([spotifySearch(rec.title, rec.artist), youtubeSearch(rec.title, rec.artist)]);
     const spotifyOk = !!spotify?.verified;
     const youtubeOk = !!youtube?.verified;
     const anyFound  = !!(spotify || youtube?.url);
     if (!anyFound) { console.log(`  DROPPED: "${rec.title}"`); return null; }
     const confidence = spotifyOk ? 'high' : youtubeOk ? 'medium' : 'low';
-    console.log(`  "${rec.title}" → ${confidence}`);
     return { ...rec, spotify, youtube, confidence };
-  } catch (e) {
-    console.warn('[crossCheck] error:', e.message);
-    return null;
-  }
+  } catch (e) { return null; }
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -313,16 +391,20 @@ function extractJSON(raw) {
   try { return JSON.parse(t); } catch (_) {}
   const s = t.indexOf('{'), e = t.lastIndexOf('}');
   if (s < 0 || e < 0) throw new Error('No JSON');
-  t = t.slice(s, e + 1);
+  t = t.slice(s, e+1);
   try { return JSON.parse(t); } catch (_) {}
   return JSON.parse(t.replace(/[\x00-\x1F\x7F]/g, ' '));
 }
 
-async function groqRecommend(song, attrList, count, exclude, intelligence) {
+async function groqRecommend(song, attrList, count, exclude, intelligence, isPro, era = 'any', energy = 'any') {
   const key = process.env.GROQ_API_KEY;
   if (!key) throw new Error('GROQ_API_KEY missing');
   const excl  = exclude.length ? `\nDo NOT include: ${exclude.map(e=>`"${e.title}" by ${e.artist}`).join(', ')}.` : '';
   const intel = intelligence || '';
+  const proNote   = isPro ? '\nThis is a Pro user — provide extra variety and deeper underground cuts.' : '';
+  const eraNote   = era    !== 'any' ? `\nERA CONSTRAINT: Only recommend songs from the ${era} (strictly within that decade).` : '';
+  const energyMap = { chill: 'low energy, mellow, laid-back, calm — nothing hype or aggressive', mid: 'moderate energy — not too chill, not too intense', hype: 'high energy, hype, intense, upbeat, energetic — nothing slow or mellow' };
+  const energyNote = energy !== 'any' ? `\nENERGY CONSTRAINT: Only recommend songs that are ${energyMap[energy]}.` : '';
   const res = await safeFetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
@@ -331,7 +413,7 @@ async function groqRecommend(song, attrList, count, exclude, intelligence) {
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: 'You are a music recommendation engine. Respond with valid JSON only. Every song must exist on Spotify and YouTube.' },
-        { role: 'user',   content: `Find ${count} real songs similar to "${song}" based on: ${attrList}.${excl}${intel}\nUse EXACT Spotify titles/artists. 60%+ underground/emerging.\nReturn ONLY: {"song":{"title":"","artist":"","attributes":{"bpm":"","key":"","energy":0.7,"danceability":0.6,"mood":"","genre_tags":[]}},"recommendations":[{"title":"","artist":"","year":"","popularity":"underground|emerging|mainstream","match_attributes":[],"similarity_score":0.9,"why":"","genre_tags":[]}]}` }
+        { role: 'user', content: `Find ${count} real songs similar to "${song}" based on: ${attrList}.${excl}${intel}${proNote}${eraNote}${energyNote}\nUse EXACT Spotify titles/artists. 60%+ underground/emerging.\nReturn ONLY: {"song":{"title":"","artist":"","attributes":{"bpm":"","key":"","energy":0.7,"danceability":0.6,"mood":"","genre_tags":[]}},"recommendations":[{"title":"","artist":"","year":"","popularity":"underground|emerging|mainstream","match_attributes":[],"similarity_score":0.9,"why":"","genre_tags":[]}]}` }
       ]
     })
   });
@@ -345,43 +427,90 @@ async function groqRecommend(song, attrList, count, exclude, intelligence) {
 // ═════════════════════════════════════════════════════════════════════════════
 // PIPELINE
 // ═════════════════════════════════════════════════════════════════════════════
-async function discoverPipeline(song, attrList) {
-  const TARGET = 8;
+async function discoverPipeline(song, attrList, isPro, era = 'any', energy = 'any') {
+  const TARGET = isPro ? 15 : 8;
   const verified = [], excluded = [];
   let songMeta = null;
   const intelligence = await getRatingIntelligence();
 
   for (let round = 1; round <= 3 && verified.length < TARGET; round++) {
     const needed = TARGET - verified.length;
-    console.log(`\n[pipeline] round ${round} — need ${needed}`);
     let gr;
-    try { gr = await groqRecommend(song, attrList, needed + 5, excluded, intelligence); }
-    catch (e) { if (e.message === 'RATE_LIMIT') throw e; console.warn('[pipeline] Groq error:', e.message); break; }
+    try { gr = await groqRecommend(song, attrList, needed+5, excluded, intelligence, isPro, era, energy); }
+    catch (e) { if (e.message === 'RATE_LIMIT') throw e; break; }
     if (!songMeta && gr?.song) songMeta = gr.song;
-    const cands = (gr?.recommendations || []).slice(0, needed + 5);
-    excluded.push(...cands.map(r => ({ title: r.title, artist: r.artist })));
+    const cands = (gr?.recommendations||[]).slice(0, needed+5);
+    excluded.push(...cands.map(r=>({title:r.title,artist:r.artist})));
     const passed = (await Promise.all(cands.map(crossCheck))).filter(Boolean);
-    console.log(`[pipeline] round ${round}: ${passed.length}/${cands.length} passed`);
     verified.push(...passed.slice(0, needed));
   }
   return { song: songMeta, recommendations: verified };
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// AUTH MIDDLEWARE
+// ═════════════════════════════════════════════════════════════════════════════
+async function authMiddleware(req, res, next) {
+  const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
+  if (!token) { req.user = null; req.isPro = false; return next(); }
+  const user = await verifyUser(token);
+  req.user  = user;
+  req.token = token;
+  if (user) {
+    const profile = await getProfile(user.id);
+    req.isPro    = profile?.tier === 'pro';
+    req.profile  = profile;
+  } else {
+    req.isPro = false;
+  }
+  next();
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 // ROUTES
 // ═════════════════════════════════════════════════════════════════════════════
-app.post('/api/discover', async (req, res) => {
+
+// ── Discover ──────────────────────────────────────────────────────────────────
+app.post('/api/discover', authMiddleware, async (req, res) => {
   try {
     const { song, attributes } = req.body || {};
     if (!song || typeof song !== 'string' || song.trim().length < 2)
       return res.status(400).json({ error: 'Please provide a song name.' });
+
     const ALLOWED = ['tempo','melody','rhythm','lyrics','vibe','production'];
-    const attrs = (attributes || []).filter(a => ALLOWED.includes(a));
+    const attrs   = (attributes || []).filter(a => ALLOWED.includes(a));
     if (!attrs.length) return res.status(400).json({ error: 'Select at least one attribute.' });
-    const result = await discoverPipeline(song.trim(), attrs.join(', '));
+
+    // Era and energy filters — passed separately, injected into prompt
+    const ALLOWED_ERAS = ['70s','80s','90s','2000s','2010s','2020s','any'];
+    const ALLOWED_ENERGY = ['chill','mid','hype','any'];
+    const era    = ALLOWED_ERAS.includes(req.body.era)    ? req.body.era    : 'any';
+    const energy = ALLOWED_ENERGY.includes(req.body.energy) ? req.body.energy : 'any';
+
+    // Quota check for logged-in users
+    if (req.user) {
+      const quota = await checkAndIncrementQuota(req.user.id);
+      if (!quota.allowed) {
+        return res.status(429).json({
+          error:      `You've used all ${quota.limit} free searches today. Upgrade to Pro for unlimited searches.`,
+          quotaError: true,
+          remaining:  0,
+          tier:       'free'
+        });
+      }
+      // Pass remaining searches in response header
+      res.setHeader('X-Searches-Remaining', quota.remaining);
+      res.setHeader('X-Searches-Tier',      quota.tier);
+    } else {
+      // Guest users — apply a softer IP-based limit (handled by rate limiter above)
+      res.setHeader('X-Searches-Remaining', 'login-to-track');
+    }
+
+    const result = await discoverPipeline(song.trim(), attrs.join(', '), req.isPro, era, energy);
     if (!result.recommendations?.length)
       return res.status(502).json({ error: 'Could not verify recommendations — try a different song.' });
-    return res.json(result);
+
+    return res.json({ ...result, tier: req.isPro ? 'pro' : 'free' });
   } catch (err) {
     console.error('[/api/discover]', err.message);
     if (err.message === 'RATE_LIMIT') return res.status(429).json({ error: 'AI busy — try again shortly.' });
@@ -389,42 +518,53 @@ app.post('/api/discover', async (req, res) => {
   }
 });
 
-app.post('/api/rate', async (req, res) => {
+// ── Get current user profile ──────────────────────────────────────────────────
+app.get('/api/me', authMiddleware, async (req, res) => {
+  if (!req.user) return res.status(401).json({ error: 'Not logged in.' });
+  try {
+    let profile = await getProfile(req.user.id);
+    if (!profile) profile = await createProfile(req.user.id, req.user.email);
+    const today = new Date().toISOString().slice(0, 10);
+    const searchesToday = profile?.last_search_date === today ? (profile?.searches_today || 0) : 0;
+    return res.json({
+      id:             req.user.id,
+      email:          req.user.email,
+      tier:           profile?.tier || 'free',
+      searchesToday,
+      searchesLimit:  profile?.tier === 'pro' ? -1 : FREE_DAILY_LIMIT,
+      remaining:      profile?.tier === 'pro' ? -1 : Math.max(0, FREE_DAILY_LIMIT - searchesToday),
+      totalSearches:  profile?.total_searches || 0
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'Could not load profile.' });
+  }
+});
+
+// ── Rate a recommendation ─────────────────────────────────────────────────────
+app.post('/api/rate', authMiddleware, async (req, res) => {
   try {
     const { searchSong, recTitle, recArtist, genreTags, matchAttrs, popularity, rating } = req.body || {};
-    if (!searchSong || !recTitle || !recArtist || ![1, -1].includes(Number(rating)))
+    if (!searchSong || !recTitle || !recArtist || ![1,-1].includes(Number(rating)))
       return res.status(400).json({ error: 'Invalid rating data.' });
-    await saveRating({ searchSong, recTitle, recArtist, genreTags, matchAttrs, popularity, rating: Number(rating) });
+    await saveRating({ userId: req.user?.id || null, searchSong, recTitle, recArtist, genreTags, matchAttrs, popularity, rating: Number(rating) });
     return res.json({ ok: true });
   } catch (e) {
-    console.error('[/api/rate]', e.message);
     return res.status(500).json({ error: 'Could not save rating.' });
   }
 });
 
+// ── Stats ─────────────────────────────────────────────────────────────────────
 app.get('/api/stats', async (req, res) => {
-  try {
-    const stats = await getStats();
-    return res.json(stats || { total: 0 });
-  } catch (e) {
-    return res.json({ total: 0 });
-  }
+  try { return res.json(await getStats() || { total: 0 }); }
+  catch (e) { return res.json({ total: 0 }); }
 });
 
+// ── Health ────────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    groq:     !!process.env.GROQ_API_KEY,
-    spotify:  !!(process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET),
-    youtube:  !!process.env.YOUTUBE_API_KEY,
-    supabase: supaEnabled,
-    timestamp: new Date().toISOString()
-  });
+  res.json({ status:'ok', groq:!!process.env.GROQ_API_KEY, spotify:!!(process.env.SPOTIFY_CLIENT_ID&&process.env.SPOTIFY_CLIENT_SECRET), youtube:!!process.env.YOUTUBE_API_KEY, supabase:supaEnabled, timestamp:new Date().toISOString() });
 });
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
-});
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../public/index.html')));
 
 // ═════════════════════════════════════════════════════════════════════════════
 // START
@@ -432,25 +572,18 @@ app.get('*', (req, res) => {
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🎵  Spot-It — Music Discovery Engine`);
   console.log(`    Port:     ${PORT}`);
-  console.log(`    Groq:     ${process.env.GROQ_API_KEY          ? '✓' : '✗ MISSING — set GROQ_API_KEY'}`);
-  console.log(`    Spotify:  ${process.env.SPOTIFY_CLIENT_ID     ? '✓' : '✗ disabled'}`);
-  console.log(`    YouTube:  ${process.env.YOUTUBE_API_KEY       ? '✓' : '✗ disabled'}`);
-  console.log(`    Supabase: ${supaEnabled                       ? '✓ learning active' : '✗ set SUPABASE_URL + SUPABASE_KEY'}\n`);
+  console.log(`    Groq:     ${process.env.GROQ_API_KEY      ? '✓' : '✗ MISSING'}`);
+  console.log(`    Spotify:  ${process.env.SPOTIFY_CLIENT_ID ? '✓' : '✗ disabled'}`);
+  console.log(`    YouTube:  ${process.env.YOUTUBE_API_KEY   ? '✓' : '✗ disabled'}`);
+  console.log(`    Supabase: ${supaEnabled ? '✓ auth + learning active' : '✗ set SUPABASE_URL + SUPABASE_KEY'}\n`);
 
   const publicURL =
     process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` :
     process.env.RENDER_EXTERNAL_URL   ? process.env.RENDER_EXTERNAL_URL : null;
-
-  if (publicURL) {
-    setInterval(() => safeFetch(`${publicURL}/api/health`).catch(() => {}), 14 * 60 * 1000);
-  }
+  if (publicURL) setInterval(() => safeFetch(`${publicURL}/api/health`).catch(()=>{}), 14*60*1000);
 });
 
-// Graceful shutdown — lets Railway restart cleanly instead of force-killing
 process.on('SIGTERM', () => {
-  console.log('[shutdown] SIGTERM received — closing gracefully');
-  server.close(() => {
-    console.log('[shutdown] closed');
-    process.exit(0);
-  });
+  console.log('[shutdown] SIGTERM — closing gracefully');
+  server.close(() => { console.log('[shutdown] done'); process.exit(0); });
 });
