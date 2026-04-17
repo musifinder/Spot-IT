@@ -278,6 +278,8 @@ h1 em{font-style:italic;color:var(--gold)}
 .player-bar{height:4px;background:var(--surface3);border-radius:2px;cursor:pointer;position:relative;overflow:hidden}
 .player-fill{height:100%;background:var(--gold);border-radius:2px;width:0%;transition:width .1s linear}
 .player-source{font-family:var(--font-mono);font-size:8px;color:var(--muted2);letter-spacing:.08em;text-transform:uppercase}
+.yt-embed-wrap{margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--border);width:100%}
+.yt-embed-wrap iframe{display:block;width:100%;height:120px;border:0}
 .btn-fallback{background:var(--bg);color:var(--muted2);border:1px solid var(--border)}
 .stream-icon{width:11px;height:11px;flex-shrink:0}
 
@@ -766,11 +768,11 @@ function renderRecs(recs){
       +  '<div class="player-track">'
       +    '<div class="player-info"><span>30s preview</span><span class="player-time" id="ptime_'+i+'">0:00</span></div>'
       +    '<div class="player-bar" data-idx="'+i+'" data-type="seek"><div class="player-fill" id="pfill_'+i+'"></div></div>'
-      +    '<div class="player-source">via '+prevSource+'</div>'
+      +    '<div class="player-source">via spotify</div>'
       +  '</div>'
       +'</div>'
       :'';
-    var prevToggle=prevUrl?'<button class="stream-btn btn-preview" data-idx="'+i+'" data-type="preview">▶ preview</button>':'';
+    var prevBtn='<button class="stream-btn btn-preview" id="prev_'+i+'" data-idx="'+i+'" data-type="preview">▶ snippet</button>';
     var shareBtn='<button class="share-btn" data-idx="'+i+'" data-action="share">⤴ share</button>';
     var digBtn='<button class="dig-more-btn" data-idx="'+i+'" data-action="digmore">dig deeper →</button>';
     var platforms=[];
@@ -795,7 +797,7 @@ function renderRecs(recs){
             '<span class="tag score">'+score+'% match</span>'+
           '</div>'+
           '<div class="rec-why">'+esc(r.why||'')+'</div>'+
-          '<div class="stream-links">'+spotBtn+appleBtn+ytBtn+prevToggle+'</div>'+
+          '<div class="stream-links">'+spotBtn+appleBtn+ytBtn+prevBtn+'</div>'+
           playerHTML+
           '<div class="action-row">'+shareBtn+digBtn+'</div>'+
         '</div>'+
@@ -831,6 +833,11 @@ function handleStream(idx,type,btn,e){
 // ── Preview player ──────────────────────────────────────────────────────────
 var _animFrame=null;
 
+function getYtId(url){
+  var m=(url||'').match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return m?m[1]:null;
+}
+
 function stopCurrentPreview(){
   if(currentAudio){
     currentAudio.pause();
@@ -839,7 +846,7 @@ function stopCurrentPreview(){
     _animFrame=null;
   }
   if(currentPrevBtn){
-    currentPrevBtn.innerHTML='▶ preview';
+    currentPrevBtn.innerHTML='▶ snippet';
     currentPrevBtn.classList.remove('playing');
   }
   document.querySelectorAll('.inline-player.visible').forEach(function(p){
@@ -847,50 +854,63 @@ function stopCurrentPreview(){
     var pbtn=p.querySelector('.player-btn');
     if(pbtn) pbtn.textContent='▶';
   });
+  document.querySelectorAll('.yt-embed-wrap').forEach(function(w){ w.remove(); });
   currentAudio=null; currentPrevBtn=null;
 }
 
 function togglePreview(idx,btn){
-  var url=urlStore[idx]&&urlStore[idx].prevUrl;
-  if(!url){ showError('No preview available for this track.'); return; }
-  var player=getE('player_'+idx);
-  var fill=getE('pfill_'+idx);
-  var timeEl=getE('ptime_'+idx);
-  if(currentAudio&&currentPrevBtn===btn){ stopCurrentPreview(); return; }
+  var u=urlStore[idx]||{};
+  // toggle off if already playing this one
+  if(currentPrevBtn===btn){ stopCurrentPreview(); return; }
   stopCurrentPreview();
-  if(player) player.classList.add('visible');
-  var audio=new Audio(url);
-  audio.volume=0.7;
-  audio.play().then(function(){
-    btn.innerHTML='■ stop';
-    btn.classList.add('playing');
-    var pbtn=player&&player.querySelector('.player-btn');
-    if(pbtn) pbtn.textContent='❚❚';
-    function updateProgress(){
-      if(!audio.paused&&audio.duration){
-        var pct=(audio.currentTime/audio.duration)*100;
-        if(fill) fill.style.width=pct+'%';
-        if(timeEl){
-          var s=Math.floor(audio.currentTime);
-          timeEl.textContent='0:'+String(s).padStart(2,'0');
+  // Spotify 30s preview — inline player with progress bar
+  if(u.prevUrl){
+    var player=getE('player_'+idx);
+    var fill=getE('pfill_'+idx);
+    var timeEl=getE('ptime_'+idx);
+    if(player) player.classList.add('visible');
+    var audio=new Audio(u.prevUrl);
+    audio.volume=0.7;
+    audio.play().then(function(){
+      btn.innerHTML='■ stop';
+      btn.classList.add('playing');
+      var pbtn=player&&player.querySelector('.player-btn');
+      if(pbtn) pbtn.textContent='❚❚';
+      function updateProgress(){
+        if(!audio.paused&&audio.duration){
+          var pct=(audio.currentTime/audio.duration)*100;
+          if(fill) fill.style.width=pct+'%';
+          if(timeEl){
+            var s=Math.floor(audio.currentTime);
+            timeEl.textContent='0:'+String(s).padStart(2,'0');
+          }
         }
+        if(!audio.paused) _animFrame=requestAnimationFrame(updateProgress);
       }
-      if(!audio.paused) _animFrame=requestAnimationFrame(updateProgress);
-    }
-    _animFrame=requestAnimationFrame(updateProgress);
-  }).catch(function(){
-    showError('Preview unavailable.');
-    if(player) player.classList.remove('visible');
-  });
-  audio.onended=function(){
-    if(fill) fill.style.width='100%';
-    setTimeout(function(){
-      stopCurrentPreview();
-      if(fill) fill.style.width='0%';
-      if(timeEl) timeEl.textContent='0:00';
-    },500);
-  };
-  currentAudio=audio;
+      _animFrame=requestAnimationFrame(updateProgress);
+    }).catch(function(){
+      showError('Preview unavailable.');
+      if(player) player.classList.remove('visible');
+    });
+    audio.onended=function(){
+      if(fill) fill.style.width='100%';
+      setTimeout(function(){
+        stopCurrentPreview();
+        if(fill) fill.style.width='0%';
+        if(timeEl) timeEl.textContent='0:00';
+      },500);
+    };
+    currentAudio=audio; currentPrevBtn=btn;
+    return;
+  }
+  // YouTube embed fallback
+  var ytId=getYtId(u.ytUrl||'');
+  if(!ytId){ showError('No snippet available for this track.'); return; }
+  var wrap=document.createElement('div');
+  wrap.id='yt-embed-'+idx; wrap.className='yt-embed-wrap';
+  wrap.innerHTML='<iframe src="https://www.youtube.com/embed/'+ytId+'?autoplay=1&start=30" allow="autoplay; encrypted-media" allowfullscreen></iframe>';
+  btn.closest('.stream-links').insertAdjacentElement('afterend',wrap);
+  btn.innerHTML='■ close'; btn.classList.add('playing');
   currentPrevBtn=btn;
 }
 
