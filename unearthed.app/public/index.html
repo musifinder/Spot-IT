@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Unearthed — AI Music Discovery | Find Underground Songs Like Your Favorites</title>
+<meta name="description" content="Discover underground music you've never heard. Paste any song and Unearthed's AI finds verified hidden gems on Spotify, Apple Music &amp; YouTube. Free, instant, triple-verified."/>
+<meta name="keywords" content="music discovery, find similar songs, underground music, hidden gems, AI music recommendations, Spotify alternative, indie music finder, song discovery tool, find new music, songs like, similar to"/>
+<meta name="author" content="Unearthed"/>
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large"/>
+<link rel="canonical" href="https://unearthed.up.railway.app"/>
+<meta name="theme-color" content="#0f0d0a"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Unearthed"/>
+
+<!-- Open Graph -->
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="Unearthed"/>
+<meta property="og:title" content="Unearthed — Find Your Hidden Bangers"/>
+<meta property="og:description" content="AI-powered music discovery. Paste any song, get verified underground recommendations across Spotify, Apple Music &amp; YouTube. Free forever."/>
+<meta property="og:url" content="https://unearthed.up.railway.app"/>
+<meta property="og:image" content="https://unearthed.up.railway.app/og-image.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:locale" content="en_US"/>
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:site" content="@unearthedapp"/>
+<meta name="twitter:creator" content="@unearthedapp"/>
+<meta name="twitter:title" content="Unearthed — Find Your Hidden Bangers"/>
+<meta name="twitter:description" content="AI-powered music discovery. Paste any song, get verified underground recommendations across Spotify, Apple Music &amp; YouTube."/>
+<meta name="twitter:image" content="https://unearthed.up.railway.app/og-image.png"/>
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="/manifest.json"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Unearthed",
+  "alternateName": "Unearthed Music Discovery",
+  "url": "https://unearthed.up.railway.app",
+  "description": "AI-powered music discovery tool that finds underground songs similar to your favorites, verified across Spotify, Apple Music, and YouTube.",
+  "applicationCategory": "MusicApplication",
+  "operatingSystem": "Any",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "creator": {
+    "@type": "Organization",
+    "name": "Unearthed",
+    "url": "https://unearthed.up.railway.app"
+  },
+  "featureList": [
+    "AI-powered song recommendations",
+    "Cross-platform verification (Spotify, Apple Music, YouTube)",
+    "Genre exploration with subgenre filtering",
+    "Underground and emerging artist discovery",
+    "Shareable discovery cards"
+  ],
+  "screenshot": "https://unearthed.up.railway.app/og-image.png"
+}
+</script>
+
+<!-- Open Graph (Facebook, LinkedIn, iMessage, Discord) -->
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://unearthed.up.railway.app"/>
+<meta property="og:title" content="Unearthed — AI Music Discovery"/>
+<meta property="og:description" content="Paste any song. Get verified underground tracks you've never heard. Free AI-powered music discovery across Spotify, Apple Music &amp; YouTube."/>
+<meta property="og:image" content="https://unearthed.up.railway.app/og-image.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:site_name" content="Unearthed"/>
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:site" content="@unearthedapp"/>
+<meta name="twitter:title" content="Unearthed — AI Music Discovery"/>
+<meta name="twitter:description" content="Paste any song. Get verified underground tracks you've never heard. Free."/>
+<meta name="twitter:image" content="https://unearthed.up.railway.app/og-image.png"/>
+
+<!-- PWA / Mobile -->
+<meta name="theme-color" content="#0f0d0a"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="Unearthed"/>
+<meta name="application-name" content="Unearthed"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+
+<!-- Structured Data (JSON-LD) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Unearthed",
+  "url": "https://unearthed.up.railway.app",
+  "description": "AI-powered music discovery tool. Paste any song and find verified underground tracks across Spotify, Apple Music and YouTube.",
+  "applicationCategory": "MusicApplication",
+  "operatingSystem": "Web",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "ratingCount": "50" }
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0d0a;--surface:#161210;--surface2:#1a1612;--surface3:#22201a;
+  --gold:#c8a96e;--gold-dim:rgba(200,169,110,.1);--gold-border:rgba(200,169,110,.28);
+  --text:#e8e0d0;--muted:#6b5e4a;--muted2:#4a3f30;--border:#2a221a;--border2:#1a1612;
+  --spotify:#1db954;--youtube:#ff4444;--apple:#fc3c44;--danger:#e44b4a;
+  --font-serif:'Playfair Display',serif;--font-mono:'IBM Plex Mono',monospace;--font-sans:'DM Sans',sans-serif;
+  --radius:10px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-height:100vh;line-height:1.6}
+#app{max-width:780px;margin:0 auto;padding:1.75rem 1.25rem 6rem}
+
+/* NAV */
+.nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:2.5rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:12px}
+.vinyl{width:38px;height:38px;border-radius:50%;background:var(--surface2);border:2px solid #3d3428;position:relative;animation:spin 4s linear infinite;flex-shrink:0}
+.vinyl::before{content:'';position:absolute;inset:6px;border-radius:50%;background:repeating-conic-gradient(#2a2218 0deg,#2a2218 10deg,#1a1612 10deg,#1a1612 20deg)}
+.vinyl::after{content:'';position:absolute;inset:36%;border-radius:50%;background:var(--gold)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.logo-text{font-family:var(--font-serif);font-size:20px;font-weight:700;color:var(--text);line-height:1}
+.logo-text span{color:var(--gold)}
+.logo-sub{font-family:var(--font-mono);font-size:9px;color:var(--muted2);letter-spacing:.15em;text-transform:uppercase;margin-top:2px}
+.nav-tag{font-family:var(--font-mono);font-size:9px;color:var(--muted2);letter-spacing:.08em}
+
+/* HEADER */
+.eyebrow{font-family:var(--font-mono);font-size:10px;color:var(--gold);letter-spacing:.2em;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:.75rem}
+.eyebrow::before{content:'';width:24px;height:1px;background:var(--gold)}
+h1{font-family:var(--font-serif);font-size:clamp(2rem,6vw,3rem);font-weight:700;line-height:.95;letter-spacing:-.02em;margin-bottom:1.75rem}
+h1 em{font-style:italic;color:var(--gold)}
+
+/* MODE TABS */
+.mode-tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:1.25rem}
+.tab-btn{flex:1;padding:8px 14px;border-radius:9px;border:none;background:transparent;font-family:var(--font-mono);font-size:11px;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:.06em}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{background:var(--gold);color:var(--bg);font-weight:500}
+
+/* SEARCH PANEL */
+.search-panel{display:block}
+.genre-panel{display:none}
+
+.search-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem 1.25rem 1.1rem;margin-bottom:1.25rem}
+.link-label{font-family:var(--font-mono);font-size:9px;color:var(--muted2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.4rem;display:flex;align-items:center;gap:6px}
+.link-label::after{content:'optional';font-size:8px;padding:1px 5px;background:var(--surface3);border-radius:4px;color:var(--muted2)}
+.link-row{display:flex;gap:8px;margin-bottom:.75rem}
+.link-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.65rem 1rem;color:var(--text);font-family:var(--font-sans);font-size:13px;outline:none;transition:border-color .2s;min-width:0}
+.link-input::placeholder{color:var(--muted2);font-style:italic}
+.link-input:focus{border-color:var(--gold-border)}
+.link-btn{background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);padding:.65rem 1rem;font-family:var(--font-mono);font-size:10px;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .15s}
+.link-btn:hover:not(:disabled){border-color:var(--gold-border);color:var(--gold)}
+.link-btn:disabled{opacity:.4;cursor:not-allowed}
+.resolved-pill{display:flex;align-items:center;gap:10px;background:var(--gold-dim);border:1px solid var(--gold-border);border-radius:var(--radius);padding:.6rem .9rem;margin-bottom:.75rem}
+.resolved-thumb{width:32px;height:32px;border-radius:5px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;overflow:hidden}
+.resolved-thumb img{width:100%;height:100%;object-fit:cover}
+.resolved-title{font-size:13px;font-weight:500;color:var(--text)}
+.resolved-artist{font-size:11px;color:var(--gold);font-family:var(--font-mono)}
+.resolved-clear{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;margin-left:auto;padding:0 4px;transition:color .15s}
+.resolved-clear:hover{color:var(--danger)}
+
+.search-row{display:flex;gap:8px;margin-bottom:1rem}
+.search-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.8rem 1rem;color:var(--text);font-family:var(--font-sans);font-size:15px;outline:none;transition:border-color .2s;min-width:0}
+.search-input::placeholder{color:var(--muted2);font-style:italic}
+.search-input:focus{border-color:var(--gold-border)}
+.search-btn{background:var(--gold);color:var(--bg);border:none;border-radius:var(--radius);padding:.8rem 1.4rem;font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.1em;cursor:pointer;white-space:nowrap;transition:opacity .15s,transform .1s;flex-shrink:0}
+.search-btn:hover:not(:disabled){opacity:.88}
+.search-btn:disabled{opacity:.35;cursor:not-allowed}
+
+.chips-label{font-family:var(--font-mono);font-size:9px;color:var(--muted2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.45rem}
+.attr-chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s;user-select:none;font-family:var(--font-mono)}
+.chip:hover{border-color:var(--gold-border);color:var(--text)}
+.chip.active{background:var(--gold-dim);border-color:var(--gold-border);color:var(--gold)}
+
+.filter-divider{height:1px;background:var(--border2);margin:.9rem 0}
+.filter-row{display:flex;gap:10px;flex-wrap:wrap}
+.filter-group{flex:1;min-width:130px}
+.filter-label{font-family:var(--font-mono);font-size:9px;color:var(--muted2);letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:5px}
+.filter-label span{color:var(--gold)}
+.filter-select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:7px 28px 7px 10px;color:var(--text);font-family:var(--font-sans);font-size:13px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%236b5e4a' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;transition:border-color .2s}
+.filter-select:focus{border-color:var(--gold-border)}
+.filter-select option{background:var(--surface2)}
+.energy-slider{width:100%;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:var(--surface3);outline:none;cursor:pointer;margin-top:2px}
+.energy-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--gold);border:2px solid var(--bg);cursor:pointer}
+.energy-labels{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9px;color:var(--muted2);margin-top:3px}
+
+/* HISTORY */
+.history-section{margin-bottom:.75rem}
+.history-label{font-family:var(--font-mono);font-size:9px;color:var(--muted2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.4rem}
+.history-row{display:flex;flex-wrap:wrap;gap:6px}
+.history-pill{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:10px;color:var(--muted);cursor:pointer;font-family:var(--font-mono);display:flex;align-items:center;gap:6px;max-width:200px;overflow:hidden;transition:all .15s}
+.history-pill:hover{border-color:var(--gold-border);color:var(--gold)}
+.history-pill-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.history-pill-del{color:var(--muted2);flex-shrink:0;font-size:11px;line-height:1}
+.history-pill-del:hover{color:var(--danger)}
+
+/* GENRE PANEL */
+.genre-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:1.25rem}
+.genre-section-label{font-family:var(--font-mono);font-size:9px;color:var(--muted2);letter-spacing:.15em;text-transform:uppercase;margin-bottom:.75rem}
+.genre-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
+@media(max-width:480px){.genre-grid{grid-template-columns:repeat(2,1fr)}}
+.genre-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.7rem .9rem;cursor:pointer;transition:all .18s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px;user-select:none}
+.genre-card:hover{border-color:var(--gold-border);transform:translateY(-1px)}
+.genre-card.selected{background:var(--gold-dim);border-color:var(--gold-border)}
+.genre-icon{font-size:20px;line-height:1}
+.genre-name{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.genre-card.selected .genre-name{color:var(--gold)}
+.subgenre-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:.9rem}
+.subgenre-pill{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:4px 11px;font-size:11px;color:var(--muted);cursor:pointer;font-family:var(--font-mono);transition:all .15s;user-select:none}
+.subgenre-pill:hover{border-color:var(--gold-border);color:var(--gold)}
+.subgenre-pill.active{background:var(--gold-dim);border-color:var(--gold-border);color:var(--gold)}
+.genre-dig-btn{width:100%;background:var(--gold);color:var(--bg);border:none;border-radius:var(--radius);padding:.8rem;font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.1em;cursor:pointer;transition:opacity .15s,transform .1s;margin-top:.5rem}
+.genre-dig-btn:hover:not(:disabled){opacity:.88}
+.genre-dig-btn:disabled{opacity:.35;cursor:not-allowed;background:var(--surface3);color:var(--muted)}
+
+/* PIPELINE NOTE */
+.pipeline-note{display:flex;align-items:flex-start;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem 1rem;margin-bottom:1.25rem;font-size:12px;color:var(--muted);font-family:var(--font-mono);line-height:1.6}
+.pipeline-note strong{color:var(--gold)}
+
+/* BANNER */
+.banner{border-radius:var(--radius);padding:.75rem 1rem;font-size:13px;margin-bottom:1.25rem;display:none;line-height:1.5;font-family:var(--font-mono)}
+.banner.visible{display:block;animation:fadeIn .2s ease}
+.banner.error{background:rgba(228,75,74,.08);border:1px solid rgba(228,75,74,.2);color:#f09595}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* SONG PROFILE */
+.song-profile{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:1.5rem;display:none}
+.song-profile.visible{display:block;animation:fadeIn .3s ease}
+.profile-top{display:flex;align-items:flex-start;gap:1rem;margin-bottom:1rem}
+.profile-art{width:54px;height:54px;border-radius:10px;background:var(--surface3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.profile-name{font-family:var(--font-serif);font-size:17px;font-weight:700;line-height:1.3}
+.profile-artist{font-size:13px;color:var(--muted);font-family:var(--font-mono);margin-top:3px}
+.section-label{font-family:var(--font-mono);font-size:9px;color:var(--muted2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+.attr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(max-width:480px){.attr-grid{grid-template-columns:repeat(2,1fr)}}
+.attr-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.6rem .8rem}
+.attr-key{font-family:var(--font-mono);font-size:9px;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+.attr-val{font-size:13px;font-weight:500}
+.attr-bar{height:3px;background:var(--surface3);border-radius:2px;margin-top:5px}
+.attr-fill{height:100%;border-radius:2px;background:var(--gold);transition:width .7s}
+
+/* LOADING */
+.loading{text-align:center;padding:4rem 1rem;display:none}
+.loading.visible{display:block}
+.loading-ring{width:36px;height:36px;border:2px solid var(--surface3);border-top-color:var(--gold);border-radius:50%;animation:spin .9s linear infinite;margin:0 auto 1rem}
+.loading-label{font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:1rem}
+.loading-step{font-size:11px;color:var(--muted2);opacity:0;transition:opacity .4s;padding:2px 0;font-family:var(--font-mono)}
+.loading-step.show{opacity:.8}
+
+/* EMPTY */
+.empty{text-align:center;padding:4rem 1rem;color:var(--muted2)}
+.empty-glyph{font-size:3rem;opacity:.2;margin-bottom:.75rem;display:block}
+.empty-text{font-size:13px;font-family:var(--font-mono)}
+
+/* RESULTS HEADER */
+.results-header{font-family:var(--font-mono);font-size:10px;color:var(--muted2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.75rem;display:flex;align-items:center;gap:10px}
+.results-header::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* REC CARD */
+.rec-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;margin-bottom:8px;transition:border-color .2s,transform .15s;animation:fadeIn .3s ease both}
+.rec-card:hover{border-color:rgba(200,169,110,.2);transform:translateY(-1px)}
+.rec-card.confidence-high{border-left:2px solid rgba(200,169,110,.5);border-radius:0 var(--radius) var(--radius) 0}
+.rec-card.confidence-medium{border-left:2px solid rgba(100,180,140,.4);border-radius:0 var(--radius) var(--radius) 0}
+.rec-card.confidence-low{border-left:2px solid rgba(255,255,255,.08);border-radius:0 var(--radius) var(--radius) 0}
+.rec-body{display:flex;gap:12px;align-items:flex-start}
+.rec-num{font-family:var(--font-mono);font-size:10px;color:var(--muted2);min-width:22px;padding-top:3px;flex-shrink:0}
+.rec-art{width:64px;height:64px;border-radius:8px;background:var(--surface3);border:1px solid var(--border);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--muted2)}
+.rec-art img{width:100%;height:100%;object-fit:cover;display:block}
+.rec-content{flex:1;min-width:0}
+.rec-title{font-family:var(--font-serif);font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec-meta{font-size:11px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:var(--font-mono)}
+.badge{font-size:10px;font-family:var(--font-mono);padding:2px 7px;border-radius:4px}
+.badge-niche{background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-border)}
+.badge-underrated{background:rgba(100,180,140,.08);color:#64b48c;border:1px solid rgba(100,180,140,.2)}
+.badge-wellknown{background:rgba(255,255,255,.04);color:var(--muted);border:1px solid var(--border)}
+.badge-verified-high{background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-border)}
+.badge-verified-medium{background:rgba(100,180,140,.06);color:#64b48c;border:1px solid rgba(100,180,140,.15)}
+.badge-verified-low{background:rgba(255,255,255,.03);color:var(--muted2);border:1px solid var(--border)}
+.rec-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.tag{font-size:10px;padding:2px 8px;border-radius:4px;background:var(--bg);color:var(--muted2);border:1px solid var(--border);font-family:var(--font-mono)}
+.tag.match{background:var(--gold-dim);color:var(--gold);border-color:var(--gold-border)}
+.tag.score{background:rgba(100,180,140,.06);color:#64b48c;border-color:rgba(100,180,140,.15)}
+.rec-why{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.55;border-top:1px solid var(--border2);padding-top:10px}
+
+/* STREAM LINKS */
+.stream-links{display:flex;align-items:center;gap:6px;margin-top:10px;flex-wrap:wrap}
+.stream-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;font-size:10px;font-weight:500;font-family:var(--font-mono);transition:opacity .15s,transform .1s;cursor:pointer;border:none;letter-spacing:.03em}
+.stream-btn:hover{opacity:.8;transform:scale(.97)}
+.btn-spotify{background:rgba(29,185,84,.1);color:var(--spotify);border:1px solid rgba(29,185,84,.2)}
+.btn-youtube{background:rgba(255,68,68,.08);color:var(--youtube);border:1px solid rgba(255,68,68,.18)}
+.btn-apple{background:rgba(252,60,68,.07);color:var(--apple);border:1px solid rgba(252,60,68,.17)}
+.btn-preview{background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-border)}
+.btn-preview.playing{background:rgba(200,169,110,.2)}
+.btn-fallback{background:var(--bg);color:var(--muted2);border:1px solid var(--border)}
+.stream-icon{width:11px;height:11px;flex-shrink:0}
+
+/* ACTION ROW */
+.action-row{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);flex-wrap:wrap}
+.share-btn,.dig-more-btn{background:none;border:1px solid var(--border);border-radius:20px;padding:4px 11px;font-size:10px;color:var(--muted2);cursor:pointer;font-family:var(--font-mono);transition:all .15s}
+.share-btn:hover,.dig-more-btn:hover{border-color:var(--gold-border);color:var(--gold)}
+.dig-more-btn{margin-left:auto}
+
+/* TOAST */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface);border:1px solid var(--gold-border);border-radius:20px;padding:8px 18px;font-family:var(--font-mono);font-size:11px;color:var(--gold);opacity:0;transition:all .3s;pointer-events:none;z-index:999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* SHARE MODAL */
+.share-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:none;align-items:center;justify-content:center;padding:1.5rem;backdrop-filter:blur(4px);animation:fadeIn .2s ease}
+.share-overlay.visible{display:flex}
+.share-modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:1.5rem;max-width:440px;width:100%;position:relative;animation:fadeIn .25s ease}
+.share-modal-title{font-family:var(--font-mono);font-size:10px;color:var(--muted2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between}
+.share-modal-close{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 4px;transition:color .15s}
+.share-modal-close:hover{color:var(--text)}
+.share-modal-img{width:100%;border-radius:12px;border:1px solid var(--border);margin-bottom:1rem;display:block}
+.share-modal-actions{display:flex;gap:8px;flex-wrap:wrap}
+.share-modal-btn{flex:1;min-width:100px;padding:10px 14px;border-radius:var(--radius);font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.06em;cursor:pointer;transition:all .15s;text-align:center;border:1px solid var(--border)}
+.share-modal-btn:hover{transform:translateY(-1px)}
+.share-modal-btn.primary{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.share-modal-btn.primary:hover{opacity:.88}
+.share-modal-btn.secondary{background:var(--bg);color:var(--text);border-color:var(--border)}
+.share-modal-btn.secondary:hover{border-color:var(--gold-border);color:var(--gold)}
+.share-modal-btn.tertiary{background:transparent;color:var(--muted);border-color:var(--border)}
+.share-modal-btn.tertiary:hover{border-color:var(--gold-border);color:var(--gold)}
+
+/* FOOTER */
+.footer{margin-top:3rem;text-align:center;font-family:var(--font-mono);font-size:10px;color:var(--muted2);opacity:.4;line-height:1.9}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <nav class="nav">
+    <div class="logo">
+      <div class="vinyl"></div>
+      <div>
+        <div class="logo-text">Un<span>earthed</span></div>
+        <div class="logo-sub">music discovery</div>
+      </div>
+    </div>
+    <div class="nav-tag">free · verified · real</div>
+  </nav>
+
+  <header>
+    <div class="eyebrow">dig deeper</div>
+    <h1>Find your<br><em>hidden bangers</em></h1>
+  </header>
+
+  <div class="pipeline-note">
+    <span>⟡&nbsp;</span>
+    <span><strong>Triple-verified:</strong> Groq AI → Spotify confirms → YouTube cross-checks → only real tracks shown.</span>
+  </div>
+
+  <!-- MODE TABS -->
+  <div class="mode-tabs">
+    <button class="tab-btn active" id="tabSong">◈ Song Search</button>
+    <button class="tab-btn"        id="tabGenre">⟡ Genre Explorer</button>
+  </div>
+
+  <!-- SONG SEARCH PANEL -->
+  <div class="search-panel" id="searchPanel">
+    <div id="historySection" style="display:none" class="history-section">
+      <div class="history-label">recent searches</div>
+      <div class="history-row" id="historyRow"></div>
+    </div>
+
+    <div class="search-box">
+      <div class="link-label">paste a link</div>
+      <div class="link-row">
+        <input id="linkInput" class="link-input" placeholder="Paste Spotify, YouTube or Apple Music link…" autocomplete="off" spellcheck="false"/>
+        <button id="linkBtn" class="link-btn" disabled>Resolve</button>
+      </div>
+      <div id="linkResolved" style="display:none"></div>
+
+      <div class="search-row">
+        <input id="songInput" class="search-input" placeholder="e.g. Low Down Derrty Blues – Smino" autocomplete="off" spellcheck="false"/>
+        <button id="searchBtn" class="search-btn">DIG IT</button>
+      </div>
+
+      <div class="chips-label">Match by</div>
+      <div class="attr-chips">
+        <span class="chip active" data-attr="tempo">Tempo</span>
+        <span class="chip active" data-attr="melody">Melody</span>
+        <span class="chip active" data-attr="rhythm">Rhythm</span>
+        <span class="chip active" data-attr="lyrics">Lyrics</span>
+      </div>
+
+      <div class="filter-divider"></div>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label class="filter-label">Popularity</label>
+          <select class="filter-select" id="popFilter">
+            <option value="any">Any popularity</option>
+            <option value="underrated">Underrated</option>
+            <option value="known">Known</option>
+            <option value="well-known">Well known</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Era</label>
+          <select class="filter-select" id="eraFilter">
+            <option value="any">Any era</option>
+            <option value="70s">70s</option>
+            <option value="80s">80s</option>
+            <option value="90s">90s</option>
+            <option value="2000s">2000s</option>
+            <option value="2010s">2010s</option>
+            <option value="2020s">2020s</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Energy — <span id="energyVal">any</span></label>
+          <input type="range" class="energy-slider" id="energySlider" min="0" max="3" value="0" step="1"/>
+          <div class="energy-labels"><span>any</span><span>chill</span><span>mid</span><span>hype</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GENRE PANEL -->
+  <div class="genre-panel" id="genrePanel">
+    <div class="genre-box">
+      <div class="genre-section-label">Select a genre</div>
+      <div class="genre-grid" id="genreGrid">
+        <div class="genre-card" data-genre="Hip-Hop / Rap"><span class="genre-icon">🎤</span><span class="genre-name">Hip-Hop</span></div>
+        <div class="genre-card" data-genre="R&B / Soul"><span class="genre-icon">🎷</span><span class="genre-name">R&amp;B / Soul</span></div>
+        <div class="genre-card" data-genre="Electronic / Dance"><span class="genre-icon">🎛</span><span class="genre-name">Electronic</span></div>
+        <div class="genre-card" data-genre="Indie / Alternative"><span class="genre-icon">🎸</span><span class="genre-name">Indie / Alt</span></div>
+        <div class="genre-card" data-genre="Jazz"><span class="genre-icon">🎺</span><span class="genre-name">Jazz</span></div>
+        <div class="genre-card" data-genre="Afrobeats"><span class="genre-icon">🥁</span><span class="genre-name">Afrobeats</span></div>
+        <div class="genre-card" data-genre="Pop"><span class="genre-icon">✨</span><span class="genre-name">Pop</span></div>
+        <div class="genre-card" data-genre="Latin"><span class="genre-icon">💃</span><span class="genre-name">Latin</span></div>
+        <div class="genre-card" data-genre="Folk / Country"><span class="genre-icon">🪕</span><span class="genre-name">Folk</span></div>
+        <div class="genre-card" data-genre="Reggae / Dancehall"><span class="genre-icon">🌿</span><span class="genre-name">Reggae</span></div>
+        <div class="genre-card" data-genre="Classical"><span class="genre-icon">🎻</span><span class="genre-name">Classical</span></div>
+        <div class="genre-card" data-genre="Lo-Fi / Chill"><span class="genre-icon">☕</span><span class="genre-name">Lo-Fi</span></div>
+      </div>
+
+      <div id="subgenreSection" style="display:none">
+        <div class="genre-section-label" style="margin-top:.25rem">Narrow it down <span style="color:var(--muted2);font-size:8px">(optional)</span></div>
+        <div class="subgenre-row" id="subgenreRow"></div>
+      </div>
+
+      <div class="filter-divider"></div>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label class="filter-label">Popularity</label>
+          <select class="filter-select" id="genrePopFilter">
+            <option value="any">Any popularity</option>
+            <option value="underrated">Underrated</option>
+            <option value="known">Known</option>
+            <option value="well-known">Well known</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Era</label>
+          <select class="filter-select" id="genreEraFilter">
+            <option value="any">Any era</option>
+            <option value="70s">70s</option>
+            <option value="80s">80s</option>
+            <option value="90s">90s</option>
+            <option value="2000s">2000s</option>
+            <option value="2010s">2010s</option>
+            <option value="2020s">2020s</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Energy — <span id="genreEnergyVal">any</span></label>
+          <input type="range" class="energy-slider" id="genreEnergySlider" min="0" max="3" value="0" step="1"/>
+          <div class="energy-labels"><span>any</span><span>chill</span><span>mid</span><span>hype</span></div>
+        </div>
+      </div>
+
+      <button class="genre-dig-btn" id="genreDigBtn" disabled>SELECT A GENRE ABOVE</button>
+    </div>
+  </div>
+
+  <div class="banner error" id="errBanner"></div>
+
+  <div class="song-profile" id="songProfile">
+    <div class="profile-top">
+      <div class="profile-art"><span>♪</span></div>
+      <div>
+        <div class="profile-name" id="profileName">—</div>
+        <div class="profile-artist" id="profileArtist">—</div>
+      </div>
+    </div>
+    <div class="section-label">sonic attributes</div>
+    <div class="attr-grid" id="attrGrid"></div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="loading-ring"></div>
+    <div class="loading-label">digging through the crates</div>
+    <div id="loadingSteps"></div>
+  </div>
+
+  <div id="results">
+    <div class="empty" id="emptyState">
+      <span class="empty-glyph">◈</span>
+      <div class="empty-text">enter a song or pick a genre to start digging</div>
+    </div>
+    <div id="recList" style="display:none"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Share modal -->
+  <div class="share-overlay" id="shareOverlay">
+    <div class="share-modal">
+      <div class="share-modal-title">
+        <span>share this find</span>
+        <button class="share-modal-close" id="shareClose">✕</button>
+      </div>
+      <img class="share-modal-img" id="shareImg" alt="Share card"/>
+      <div class="share-modal-actions">
+        <button class="share-modal-btn primary" id="shareLink">⟳ Copy Share Link</button>
+        <button class="share-modal-btn secondary" id="shareNative">⤴ Share</button>
+        <button class="share-modal-btn tertiary" id="shareCopy">Copy Image</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>unearthed · AI music discovery · free forever</p>
+    <p>Find songs like yours on Spotify · Apple Music · YouTube</p>
+  </footer>
+
+  <noscript>
+    <div style="padding:2rem;color:#e8e0d0;font-family:sans-serif;max-width:700px;margin:0 auto">
+      <h1>Unearthed — AI Music Discovery</h1>
+      <p>Unearthed is a free AI-powered music discovery tool. Paste any song from Spotify, Apple Music, or YouTube and instantly find verified underground tracks you've never heard.</p>
+      <h2>How it works</h2>
+      <p>1. Enter a song name or paste a link from Spotify, YouTube, or Apple Music.</p>
+      <p>2. Our AI analyzes the track's sonic DNA — tempo, melody, rhythm, energy, and genre.</p>
+      <p>3. Get 10+ verified recommendations with links to stream on every platform.</p>
+      <h2>Features</h2>
+      <ul>
+        <li>Song Search — find tracks similar to any song</li>
+        <li>Genre Explorer — discover music across 12 genres and dozens of subgenres</li>
+        <li>Triple-verified — every recommendation confirmed on Spotify, Apple Music, and YouTube</li>
+        <li>Popularity filters — find underrated, known, or well-known artists</li>
+        <li>Era filters — discover music from the 70s through 2020s</li>
+        <li>Share cards — beautiful shareable images of your discoveries</li>
+      </ul>
+      <h2>Supported Genres</h2>
+      <p>Hip-Hop, R&B/Soul, Electronic, Indie/Alternative, Jazz, Afrobeats, Pop, Latin, Folk/Country, Reggae/Dancehall, Classical, Lo-Fi/Chill</p>
+      <p>Please enable JavaScript to use Unearthed.</p>
+    </div>
+  </noscript>
+</div>
+
+<script>
+'use strict';
+
+// ── SVG Icons ────────────────────────────────────────────────────────────────
+var SI = '<svg class="stream-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>';
+var YI = '<svg class="stream-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>';
+var AI = '<svg class="stream-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>';
+
+// ── State ────────────────────────────────────────────────────────────────────
+var currentSong    = '';
+var currentMode    = 'song';
+var selectedGenre  = '';
+var selectedSub    = '';
+var ratings        = {};
+var urlStore       = {};
+var recStore       = {};
+var currentAudio   = null;
+var currentPrevBtn = null;
+var resolvedTrack  = null;
+
+var SUBGENRES = {
+  'Hip-Hop / Rap':       ['Boom Bap','Trap','Conscious Rap','Drill','Jazz Rap','Cloud Rap','Southern Rap','Lo-Fi Rap'],
+  'R&B / Soul':          ['Neo Soul','Indie R&B','Contemporary R&B','Alternative R&B','New Jack Swing','Quiet Storm'],
+  'Electronic / Dance':  ['House','Techno','Drum & Bass','Ambient','Synthwave','Trip Hop','IDM','Dubstep'],
+  'Indie / Alternative': ['Indie Rock','Shoegaze','Emo','Post-Punk','Dream Pop','Art Rock','Grunge','Math Rock'],
+  'Jazz':                ['Bebop','Jazz Fusion','Nu Jazz','Smooth Jazz','Avant-Garde','Modal Jazz','Latin Jazz'],
+  'Afrobeats':           ['Afropop','Amapiano','Highlife','Afro-Soul','Naija Pop'],
+  'Pop':                 ['Synth Pop','Dream Pop','Indie Pop','Hyperpop','Electropop','Chamber Pop'],
+  'Latin':               ['Reggaeton','Salsa','Cumbia','Bachata','Latin Trap','Latin Pop','Bossa Nova'],
+  'Folk / Country':      ['Indie Folk','Alt-Country','Bluegrass','Americana','Singer-Songwriter','Roots'],
+  'Reggae / Dancehall':  ['Roots Reggae','Dancehall','Dub','Ska'],
+  'Classical':           ['Baroque','Romantic','Contemporary Classical','Minimalist','Chamber Music'],
+  'Lo-Fi / Chill':       ['Lo-Fi Hip-Hop','Chillwave','Vaporwave','Downtempo','Ambient Pop']
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function pct(v){ return v!=null ? Math.round(v*100)+'%' : '—'; }
+function getE(id){ return document.getElementById(id); }
+
+function showToast(msg){
+  var t=getE('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); },2800);
+}
+function showError(msg){
+  var b=getE('errBanner'); b.textContent=msg; b.classList.add('visible');
+  setTimeout(function(){ b.classList.remove('visible'); },8000);
+}
+function setLoading(on){
+  getE('loading').classList.toggle('visible',on);
+  getE('searchBtn').disabled=on;
+  getE('genreDigBtn').disabled=on||!selectedGenre;
+}
+function animateSteps(){
+  var steps=['⟡ identifying song signature...','⟡ spotify fetching audio DNA...','⟡ groq AI generating candidates...','⟡ cross-checking youtube...','⟡ verifying on apple music...','⟡ filtering hidden gems...'];
+  var el=getE('loadingSteps'); el.innerHTML='';
+  steps.forEach(function(s,i){
+    var d=document.createElement('div'); d.className='loading-step'; d.textContent=s;
+    el.appendChild(d);
+    setTimeout(function(){ d.classList.add('show'); },i*800);
+  });
+}
+
+// ── Mode tabs ────────────────────────────────────────────────────────────────
+function setMode(mode){
+  currentMode=mode;
+  getE('tabSong').classList.toggle('active',mode==='song');
+  getE('tabGenre').classList.toggle('active',mode==='genre');
+  getE('searchPanel').style.display=mode==='song'?'block':'none';
+  getE('genrePanel').style.display=mode==='genre'?'block':'none';
+}
+
+// ── Attribute chips ──────────────────────────────────────────────────────────
+function getActiveAttrs(){
+  return Array.from(document.querySelectorAll('.attr-chips .chip.active')).map(function(c){ return c.dataset.attr; });
+}
+
+// ── Genre explorer ───────────────────────────────────────────────────────────
+function selectGenre(card){
+  document.querySelectorAll('.genre-card').forEach(function(c){ c.classList.remove('selected'); });
+  card.classList.add('selected');
+  selectedGenre=card.dataset.genre;
+  selectedSub='';
+
+  var subs=SUBGENRES[selectedGenre]||[];
+  var section=getE('subgenreSection');
+  var row=getE('subgenreRow');
+  row.innerHTML='';
+  if(subs.length){
+    subs.forEach(function(s){
+      var p=document.createElement('span');
+      p.className='subgenre-pill'; p.textContent=s;
+      p.addEventListener('click',function(){ selectSub(p,s); });
+      row.appendChild(p);
+    });
+    section.style.display='block';
+  } else {
+    section.style.display='none';
+  }
+  var btn=getE('genreDigBtn');
+  btn.disabled=false;
+  btn.textContent='DIG '+selectedGenre.toUpperCase();
+}
+
+function selectSub(pill,sub){
+  var was=pill.classList.contains('active');
+  document.querySelectorAll('.subgenre-pill').forEach(function(p){ p.classList.remove('active'); });
+  if(!was){ pill.classList.add('active'); selectedSub=sub; }
+  else { selectedSub=''; }
+  var btn=getE('genreDigBtn');
+  btn.textContent='DIG '+(selectedSub||selectedGenre).toUpperCase();
+}
+
+async function digGenre(){
+  if(!selectedGenre) return;
+  currentSong=(selectedSub||selectedGenre);
+  resetResults();
+  setLoading(true);
+  animateSteps();
+  var era=['any','chill','mid','hype'][0];
+  var energy=['any','chill','mid','hype'][parseInt(getE('genreEnergySlider').value)];
+  var era2=getE('genreEraFilter').value||'any';
+  var pop=getE('genrePopFilter').value||'any';
+  try {
+    var r=await fetch('/api/genre',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({genre:selectedGenre,subgenre:selectedSub,era:era2,energy:energy,popFilter:pop})});
+    var d=await r.json();
+    setLoading(false);
+    if(!r.ok){ showError(d.error||'Something went wrong.'); getE('emptyState').style.display='block'; return; }
+    renderRecs(d.recommendations);
+  } catch(e){ setLoading(false); getE('emptyState').style.display='block'; showError('Network error — please try again.'); }
+}
+
+// ── Song search ──────────────────────────────────────────────────────────────
+async function findSimilar(){
+  var song=getE('songInput').value.trim();
+  if(!song){ showError('Please enter a song name.'); return; }
+  var attrs=getActiveAttrs();
+  if(!attrs.length){ showError('Select at least one attribute chip.'); return; }
+  currentSong=song;
+  saveToHistory(song);
+  resetResults();
+  setLoading(true);
+  animateSteps();
+  var era=getE('eraFilter').value||'any';
+  var energy=['any','chill','mid','hype'][parseInt(getE('energySlider').value)];
+  var pop=getE('popFilter').value||'any';
+  try {
+    var r=await fetch('/api/discover',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({song:song,attributes:attrs,era:era,energy:energy,popFilter:pop})});
+    var d=await r.json();
+    setLoading(false);
+    if(!r.ok){ showError(d.error||'Something went wrong.'); getE('emptyState').style.display='block'; return; }
+    renderProfile(d.song);
+    renderRecs(d.recommendations);
+  } catch(e){ setLoading(false); getE('emptyState').style.display='block'; showError('Network error — please try again.'); }
+}
+
+function resetResults(){
+  getE('songProfile').classList.remove('visible');
+  getE('recList').style.display='none';
+  getE('emptyState').style.display='none';
+}
+
+// ── Render profile ───────────────────────────────────────────────────────────
+function renderProfile(song){
+  if(!song) return;
+  getE('profileName').textContent=song.title||'—';
+  getE('profileArtist').textContent=song.artist||'—';
+  var a=song.attributes||{};
+  getE('attrGrid').innerHTML=[
+    {key:'BPM',val:a.bpm||'—',p:null},{key:'Key',val:a.key||'—',p:null},
+    {key:'Mood',val:a.mood||'—',p:null},{key:'Energy',val:pct(a.energy),p:a.energy||0},
+    {key:'Dance',val:pct(a.danceability),p:a.danceability||0},
+    {key:'Genre',val:(a.genre_tags||[]).join(', ')||'—',p:null}
+  ].map(function(c){
+    return '<div class="attr-card"><div class="attr-key">'+c.key+'</div><div class="attr-val">'+esc(c.val)+'</div>'+(c.p!==null?'<div class="attr-bar"><div class="attr-fill" style="width:'+Math.round(c.p*100)+'%"></div></div>':'')+'</div>';
+  }).join('');
+  getE('songProfile').classList.add('visible');
+}
+
+// ── Render recs ──────────────────────────────────────────────────────────────
+function renderRecs(recs){
+  if(!recs||!recs.length){ getE('emptyState').style.display='block'; return; }
+  // Sort by platform availability: 3-platform tracks first
+  recs.sort(function(a,b){ return (b.platformHits||1)-(a.platformHits||1); });
+  var list=getE('recList');
+  var onAll=recs.filter(function(r){ return (r.platformHits||0)>=3; }).length;
+  var headerText=recs.length+' tracks found';
+  if(onAll>0) headerText+=' · '+onAll+' on all platforms';
+  list.innerHTML='<div class="results-header">'+headerText+'</div>';
+  recs.forEach(function(r,i){
+    var id='rec_'+i;
+    var conf=r.confidence||'low';
+    var score=Math.round((r.similarity_score||0.8)*100);
+    var tierBadge='';
+    if(r.streamTier){
+      var tc={underrated:'badge-niche',known:'badge-underrated','well-known':'badge-wellknown'}[r.streamTier]||'badge-wellknown';
+      tierBadge='<span class="badge '+tc+'">'+r.streamTier+'</span> ';
+    }
+    var vmap={high:'badge-verified-high',medium:'badge-verified-medium',low:'badge-verified-low'};
+    var vlbl={high:'✓✓ verified',medium:'✓ verified',low:'~ found'};
+    var bestImg = (r.apple&&r.apple.image) || (r.spotify&&r.spotify.image) || (r.youtube&&r.youtube.thumbnail) || null;
+    var artHTML=bestImg
+      ?'<div class="rec-art"><img src="'+esc(bestImg)+'" alt="" loading="lazy"/></div>'
+      :'<div class="rec-art">♪</div>';
+    var spotUrl=r.spotify&&r.spotify.url||'';
+    var ytUrl=r.youtube&&r.youtube.url||'';
+    var prevUrl=r.spotify&&r.spotify.preview||'';
+    var appleUrl=r.apple&&r.apple.url||('https://music.apple.com/search?term='+encodeURIComponent((r.title||'')+' '+(r.artist||'')));
+    var sfbUrl='https://open.spotify.com/search/'+encodeURIComponent((r.title||'')+' '+(r.artist||''));
+    var ytfbUrl='https://www.youtube.com/results?search_query='+encodeURIComponent((r.title||'')+' '+(r.artist||''));
+    if(!spotUrl&&r.spotify&&r.spotify.trackId) spotUrl='https://open.spotify.com/track/'+r.spotify.trackId;
+    urlStore[i]={spotUrl:spotUrl,ytUrl:ytUrl||ytfbUrl,sfbUrl:sfbUrl,ytfbUrl:ytfbUrl,appleUrl:appleUrl,prevUrl:prevUrl};
+    recStore[i]=r;
+    var spotBtn=spotUrl
+      ?'<button class="stream-btn btn-spotify" data-idx="'+i+'" data-type="spotify">'+SI+' Spotify</button>'
+      :'<button class="stream-btn btn-fallback" data-idx="'+i+'" data-type="spotifyfb">Search Spotify</button>';
+    var ytLbl=r.youtube&&r.youtube.viaApi?YI+' YouTube':YI+' Search YouTube';
+    var ytBtn='<button class="stream-btn btn-youtube" data-idx="'+i+'" data-type="youtube">'+ytLbl+'</button>';
+    var appleBtn='<button class="stream-btn btn-apple" data-idx="'+i+'" data-type="apple">'+AI+' '+(r.apple&&r.apple.viaApi?'Apple Music':'Search Apple')+'</button>';
+    var prevBtn=prevUrl?'<button class="stream-btn btn-preview" id="prev_'+i+'" data-idx="'+i+'" data-type="preview">▶ preview</button>':'';
+    var shareBtn='<button class="share-btn" data-idx="'+i+'" data-action="share">⤴ share</button>';
+    var digBtn='<button class="dig-more-btn" data-idx="'+i+'" data-action="digmore">dig deeper →</button>';
+    var platforms=[];
+    if(spotUrl) platforms.push('<span style="color:var(--spotify);font-size:9px">● Spotify</span>');
+    if(r.apple&&r.apple.viaApi) platforms.push('<span style="color:var(--apple);font-size:9px">● Apple</span>');
+    if(r.youtube&&r.youtube.viaApi) platforms.push('<span style="color:var(--youtube);font-size:9px">● YouTube</span>');
+    var platformStr=platforms.length?' · '+platforms.join(' '):'';
+    var card=document.createElement('div');
+    card.className='rec-card confidence-'+conf;
+    card.id=id;
+    card.style.animationDelay=(i*50)+'ms';
+    card.innerHTML=
+      '<div class="rec-body">'+
+        '<div class="rec-num">'+String(i+1).padStart(2,'0')+'</div>'+
+        artHTML+
+        '<div class="rec-content">'+
+          '<div class="rec-title">'+esc(r.title)+'</div>'+
+          '<div class="rec-meta">'+esc(r.artist)+' · '+esc(r.year||'')+' '+tierBadge+'<span class="badge '+vmap[conf]+'">'+vlbl[conf]+'</span>'+platformStr+'</div>'+
+          '<div class="rec-tags">'+
+            (r.match_attributes||[]).map(function(t){ return '<span class="tag match">↑ '+esc(t)+'</span>'; }).join('')+
+            (r.genre_tags||[]).map(function(t){ return '<span class="tag">'+esc(t)+'</span>'; }).join('')+
+            '<span class="tag score">'+score+'% match</span>'+
+          '</div>'+
+          '<div class="rec-why">'+esc(r.why||'')+'</div>'+
+          '<div class="stream-links">'+spotBtn+appleBtn+ytBtn+prevBtn+'</div>'+
+          '<div class="action-row">'+shareBtn+digBtn+'</div>'+
+        '</div>'+
+      '</div>';
+    list.appendChild(card);
+    ratings[id]=0;
+  });
+  list.style.display='block';
+  // Wire all buttons via event delegation on the list
+  list.querySelectorAll('[data-idx]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var idx=parseInt(this.dataset.idx);
+      var type=this.dataset.type;
+      var action=this.dataset.action;
+      if(type) handleStream(idx,type,this);
+      if(action==='share') shareResult(idx);
+      if(action==='digmore') digMore(idx);
+    });
+  });
+}
+
+// ── Stream handler ───────────────────────────────────────────────────────────
+function handleStream(idx,type,btn){
+  if(type==='preview'){ togglePreview(idx,btn); return; }
+  var u=urlStore[idx]; if(!u) return;
+  var map={spotify:u.spotUrl,youtube:u.ytUrl,apple:u.appleUrl,spotifyfb:u.sfbUrl,youtubefb:u.ytfbUrl};
+  var url=map[type];
+  if(type==='spotify'&&(!url||url==='')) url=u.sfbUrl;
+  if(url) window.open(url,'_blank','noopener,noreferrer');
+}
+
+// ── Preview ──────────────────────────────────────────────────────────────────
+function togglePreview(idx,btn){
+  var url=urlStore[idx]&&urlStore[idx].prevUrl;
+  if(!url){ showError('No preview available.'); return; }
+  if(currentAudio&&currentPrevBtn){
+    currentAudio.pause();
+    currentPrevBtn.innerHTML='▶ preview';
+    currentPrevBtn.classList.remove('playing');
+    if(currentPrevBtn===btn){ currentAudio=null; currentPrevBtn=null; return; }
+  }
+  var audio=new Audio(url); audio.volume=0.7;
+  audio.play().catch(function(){ showError('Preview unavailable.'); });
+  audio.onended=function(){ btn.innerHTML='▶ preview'; btn.classList.remove('playing'); currentAudio=null; currentPrevBtn=null; };
+  btn.innerHTML='■ stop'; btn.classList.add('playing');
+  currentAudio=audio; currentPrevBtn=btn;
+}
+
+// ── Dig more ─────────────────────────────────────────────────────────────────
+function digMore(idx){
+  var r=recStore[idx]; if(!r) return;
+  getE('songInput').value=r.title+' – '+r.artist;
+  setMode('song');
+  window.scrollTo({top:0,behavior:'smooth'});
+  setTimeout(findSimilar,300);
+}
+
+// ── Search history ───────────────────────────────────────────────────────────
+var HIST_KEY='unearthed_history';
+function getHistory(){ try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); }catch(e){ return []; } }
+function saveToHistory(song){
+  var h=getHistory().filter(function(s){ return s!==song; });
+  h.unshift(song); if(h.length>10) h=h.slice(0,10);
+  try{ localStorage.setItem(HIST_KEY,JSON.stringify(h)); }catch(e){}
+  renderHistory();
+}
+function renderHistory(){
+  var h=getHistory();
+  var sec=getE('historySection');
+  var row=getE('historyRow');
+  if(!h.length){ sec.style.display='none'; return; }
+  sec.style.display='block';
+  row.innerHTML='';
+  h.forEach(function(s){
+    var pill=document.createElement('span'); pill.className='history-pill';
+    var txt=document.createElement('span'); txt.className='history-pill-text'; txt.textContent=s;
+    var del=document.createElement('span'); del.className='history-pill-del'; del.textContent='✕';
+    del.addEventListener('click',function(e){ e.stopPropagation(); removeHistory(s); });
+    pill.appendChild(txt); pill.appendChild(del);
+    pill.addEventListener('click',function(){ getE('songInput').value=s; findSimilar(); });
+    row.appendChild(pill);
+  });
+}
+function removeHistory(song){
+  var h=getHistory().filter(function(s){ return s!==song; });
+  try{ localStorage.setItem(HIST_KEY,JSON.stringify(h)); }catch(e){}
+  renderHistory();
+}
+
+// ── Share card ───────────────────────────────────────────────────────────
+function rrect(ctx,x,y,w,h,r){
+  var tl,tr,br,bl;
+  if(typeof r==='number'){tl=tr=br=bl=r;}else{tl=r[0];tr=r[1];br=r[2];bl=r[3];}
+  ctx.beginPath(); ctx.moveTo(x+tl,y); ctx.lineTo(x+w-tr,y); ctx.quadraticCurveTo(x+w,y,x+w,y+tr);
+  ctx.lineTo(x+w,y+h-br); ctx.quadraticCurveTo(x+w,y+h,x+w-br,y+h);
+  ctx.lineTo(x+bl,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-bl);
+  ctx.lineTo(x,y+tl); ctx.quadraticCurveTo(x,y,x+tl,y); ctx.closePath();
+}
+
+function shareResult(idx){
+  var rec=recStore[idx]; if(!rec) return;
+  var W=400,H=500,canvas=document.createElement('canvas');
+  canvas.width=W; canvas.height=H;
+  var ctx=canvas.getContext('2d');
+  var imgUrl=(rec.apple&&rec.apple.image)||(rec.spotify&&rec.spotify.image)||(rec.youtube&&rec.youtube.thumbnail)||null;
+
+  function draw(albumImg){
+    ctx.fillStyle='#0f0d0a'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#1a1612';
+    rrect(ctx,24,24,W-48,H-48,18); ctx.fill();
+    ctx.fillStyle='#c8a96e'; ctx.fillRect(0,0,4,H);
+    var artH=Math.round((H-48)*0.55);
+    ctx.save(); rrect(ctx,24,24,W-48,artH,[18,18,0,0]); ctx.clip();
+    if(albumImg){
+      var sc=Math.max((W-48)/albumImg.width,artH/albumImg.height);
+      var dw=albumImg.width*sc,dh=albumImg.height*sc;
+      ctx.drawImage(albumImg,24+(W-48-dw)/2,24+(artH-dh)/2,dw,dh);
+      var g=ctx.createLinearGradient(0,24+artH*0.5,0,24+artH);
+      g.addColorStop(0,'rgba(26,22,18,0)'); g.addColorStop(1,'rgba(26,22,18,0.85)');
+      ctx.fillStyle=g; ctx.fillRect(24,24,W-48,artH);
+    } else {
+      ctx.fillStyle='#221e18'; ctx.fillRect(24,24,W-48,artH);
+    }
+    ctx.restore();
+    var ty=24+artH+22;
+    ctx.fillStyle='#e8e0d0'; ctx.font='bold 22px serif';
+    var title=rec.title||'';
+    while(ctx.measureText(title).width>W-68&&title.length>3) title=title.slice(0,-1);
+    if(title!==rec.title) title+='…';
+    ctx.fillText(title,34,ty); ty+=28;
+    ctx.fillStyle='#8a7a65'; ctx.font='400 14px sans-serif';
+    ctx.fillText(rec.artist||'',34,ty); ty+=22;
+    if(rec.year||rec.streamTier){ ctx.fillStyle='#4a3f30'; ctx.font='400 12px monospace'; ctx.fillText([rec.year,rec.streamTier].filter(Boolean).join(' · '),34,ty); ty+=20; }
+    var sc2=Math.round((rec.similarity_score||0.8)*100)+'% match';
+    ctx.fillStyle='rgba(200,169,110,.15)'; rrect(ctx,34,ty,90,22,11); ctx.fill();
+    ctx.fillStyle='#c8a96e'; ctx.font='500 11px monospace'; ctx.fillText(sc2,44,ty+15);
+    var barY=H-24-1;
+    ctx.strokeStyle='#2a221a'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(34,barY-18); ctx.lineTo(W-34,barY-18); ctx.stroke();
+    ctx.fillStyle='#c8a96e'; ctx.font='600 12px monospace'; ctx.fillText('UN',34,barY-4);
+    ctx.fillStyle='#6b5e4a'; ctx.font='400 12px monospace'; ctx.fillText('EARTHED',34+ctx.measureText('UN').width-1,barY-4);
+    ctx.fillStyle='#3a3028'; ctx.font='400 10px monospace'; ctx.textAlign='right';
+    ctx.fillText('unearthed.up.railway.app',W-34,barY-4); ctx.textAlign='left';
+
+    canvas.toBlob(function(blob){
+      var url=URL.createObjectURL(blob);
+      getE('shareImg').src=url;
+      getE('shareOverlay').classList.add('visible');
+      window._shareBlob=blob;
+      window._shareUrl=url;
+      window._shareRec=rec;
+      var file=new File([blob],'unearthed.png',{type:'image/png'});
+      var canNative=navigator.share&&navigator.canShare&&navigator.canShare({files:[file]});
+      getE('shareNative').style.display=canNative?'':'none';
+    },'image/png');
+  }
+
+  if(imgUrl){ var img=new Image(); img.crossOrigin='anonymous'; img.onload=function(){ draw(img); }; img.onerror=function(){ draw(null); }; img.src=imgUrl; }
+  else draw(null);
+}
+
+function closeShareModal(){
+  getE('shareOverlay').classList.remove('visible');
+  if(window._shareUrl){ setTimeout(function(){ URL.revokeObjectURL(window._shareUrl); },500); }
+  window._shareBlob=null; window._shareUrl=null; window._shareRec=null;
+}
+
+function shareNative(){
+  if(!window._shareBlob||!window._shareRec) return;
+  var file=new File([window._shareBlob],'unearthed.png',{type:'image/png'});
+  var rec=window._shareRec;
+  navigator.share({title:rec.title+' — found on Unearthed',text:rec.title+' by '+rec.artist,files:[file]}).then(function(){
+    closeShareModal(); showToast('shared ✓');
+  }).catch(function(){});
+}
+
+function shareCopyImage(){
+  if(!window._shareBlob) return;
+  try{
+    navigator.clipboard.write([new ClipboardItem({'image/png':window._shareBlob})]).then(function(){
+      showToast('image copied to clipboard ✓');
+    }).catch(function(){ showToast('copy not supported — try save instead'); });
+  }catch(e){ showToast('copy not supported — try save instead'); }
+}
+
+function shareCopyLink(){
+  if(!window._shareRec) return;
+  var rec=window._shareRec;
+  // Build shareable URL: /share?t=Title&a=Artist
+  var url=window.location.origin+'/share?t='+encodeURIComponent(rec.title||'')+'&a='+encodeURIComponent(rec.artist||'');
+  // Prefer native share for mobile, fallback to clipboard
+  if(navigator.share){
+    navigator.share({
+      title:rec.title+' — found on Unearthed',
+      text:'Check out "'+rec.title+'" by '+rec.artist+' — found via Unearthed',
+      url:url
+    }).then(function(){ showToast('shared ✓'); }).catch(function(){
+      copyLinkFallback(url);
+    });
+  } else {
+    copyLinkFallback(url);
+  }
+}
+
+function copyLinkFallback(url){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(function(){
+      showToast('link copied — paste anywhere ✓');
+    }).catch(function(){
+      // Last resort: textarea method
+      var ta=document.createElement('textarea');
+      ta.value=url; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); showToast('link copied ✓'); }catch(e){ showToast('could not copy — try sharing instead'); }
+      document.body.removeChild(ta);
+    });
+  } else {
+    showToast('copy not supported in this browser');
+  }
+}
+
+
+// ── Link resolver ────────────────────────────────────────────────────────────
+function isLink(v){ return v.includes('spotify.com')||v.includes('youtu')||v.includes('music.apple.com')||v.includes('spotify.link'); }
+async function resolveLink(){
+  var url=getE('linkInput').value.trim(); if(!url) return;
+  var btn=getE('linkBtn'); btn.disabled=true; btn.textContent='Resolving…';
+  try{
+    var r=await fetch('/api/resolve-link',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url})});
+    var d=await r.json();
+    if(!r.ok){ showError(d.error||'Could not resolve that link.'); }
+    else{
+      resolvedTrack=d;
+      getE('songInput').value=d.searchString;
+      var icon={spotify:'🟢',youtube:'🔴',apple:'🎵'}[d.source]||'🎵';
+      var thumb=d.image?'<div class="resolved-thumb"><img src="'+esc(d.image)+'" alt=""/></div>':'<div class="resolved-thumb">♪</div>';
+      getE('linkResolved').style.display='flex';
+      getE('linkResolved').className='resolved-pill';
+      getE('linkResolved').innerHTML=thumb+'<div><div class="resolved-title">'+esc(d.title)+'</div><div class="resolved-artist">'+icon+' '+esc(d.artist)+'</div></div><button class="resolved-clear" id="clearResolved">✕</button>';
+      getE('clearResolved').addEventListener('click',clearLink);
+      getE('linkInput').value='';
+      showToast('track identified — hit DIG IT');
+    }
+  }catch(e){ showError('Network error resolving link.'); }
+  btn.textContent='Resolve'; btn.disabled=!isLink(getE('linkInput').value.trim());
+}
+function clearLink(){
+  resolvedTrack=null; getE('linkResolved').style.display='none';
+  getE('linkInput').value=''; getE('linkBtn').disabled=true; getE('songInput').value='';
+}
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function(){
+
+  // Mode tabs
+  getE('tabSong').addEventListener('click',  function(){ setMode('song'); });
+  getE('tabGenre').addEventListener('click', function(){ setMode('genre'); });
+
+  // Song search
+  getE('searchBtn').addEventListener('click', findSimilar);
+  getE('songInput').addEventListener('keydown', function(e){ if(e.key==='Enter') findSimilar(); });
+
+  // Genre cards
+  document.querySelectorAll('.genre-card').forEach(function(card){
+    card.addEventListener('click', function(){ selectGenre(this); });
+  });
+  getE('genreDigBtn').addEventListener('click', digGenre);
+
+  // Attribute chips
+  document.querySelectorAll('.attr-chips .chip').forEach(function(c){
+    c.addEventListener('click', function(){ this.classList.toggle('active'); });
+  });
+
+  // Energy slider
+  getE('energySlider').addEventListener('input', function(){
+    getE('energyVal').textContent=['any','chill','mid','hype'][this.value];
+  });
+  getE('genreEnergySlider').addEventListener('input', function(){
+    getE('genreEnergyVal').textContent=['any','chill','mid','hype'][this.value];
+  });
+
+  // Link resolver
+  getE('linkInput').addEventListener('input', function(){
+    var v=this.value.trim();
+    getE('linkBtn').disabled=!isLink(v);
+    if(isLink(v)&&v.length>20){
+      clearTimeout(window._ldb);
+      window._ldb=setTimeout(resolveLink,400);
+    }
+  });
+  getE('linkBtn').addEventListener('click', resolveLink);
+
+  // History
+  renderHistory();
+
+  // Share modal
+  getE('shareClose').addEventListener('click', closeShareModal);
+  getE('shareOverlay').addEventListener('click', function(e){ if(e.target===this) closeShareModal(); });
+  getE('shareLink').addEventListener('click', shareCopyLink);
+  getE('shareNative').addEventListener('click', shareNative);
+  getE('shareCopy').addEventListener('click', shareCopyImage);
+
+  // Auto-search if opened via shared link (?t=Title&a=Artist)
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var sharedTitle  = params.get('t');
+    var sharedArtist = params.get('a');
+    if (sharedTitle && sharedArtist) {
+      var seed = sharedTitle + ' – ' + sharedArtist;
+      getE('songInput').value = seed;
+      showToast('shared track loaded — digging similar...');
+      setTimeout(findSimilar, 400);
+      // Clean the URL so refresh doesn't re-run
+      if (history.replaceState) history.replaceState({}, '', window.location.pathname);
+    }
+  } catch(e){}
+});
+</script>
+</body>
+</html>
