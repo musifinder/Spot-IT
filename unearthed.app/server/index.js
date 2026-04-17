@@ -488,6 +488,7 @@ async function appleMusicSearch(title, artist) {
           const r = {
             url:       best.trackViewUrl || `https://music.apple.com/search?term=${q}`,
             image:     best.artworkUrl100?.replace('100x100', '300x300') || null,
+            preview:   best.previewUrl || null,
             viaApi:    true, verified: bestScore >= 0.75, matchScore: bestScore
           };
           appleCache.set(ck, r); return r;
